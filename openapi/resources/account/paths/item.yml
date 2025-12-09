@@ -1,0 +1,32 @@
+paths:
+  /accounts/{id}:
+    get:
+      operationId: getAccountById
+      summary: Get account by ID
+      description: Get account by ID
+      tags:
+        - account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/success.yml'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/account-response.yml'
+        '400':
+          $ref: '#/components/responses/bad-request.yml'
+        '404':
+          $ref: '#/components/responses/not-found.yml'
+        '500':
+          $ref: '#/components/responses/internal-server-error.yml'

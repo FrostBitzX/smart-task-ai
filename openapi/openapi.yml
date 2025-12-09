@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Smart Task AI API
+  version: 1.0.0
+  description: API for managing services
+
+servers: []
+
+# Tags for logical grouping of operations
+tags:
+  - name: account
+    description: Operations related to account management
+
+# All paths are referenced from external files
+paths:
+  # Account endpoints
+  /accounts:
+    $ref: "./resources/account/paths/collection.yml#/paths/~1accounts"
