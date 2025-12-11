@@ -1,10 +1,7 @@
 .PHONY: tidy mod codegen codegen-tag lint
 
-tidy:
-	go mod tidy
-
 mod:
-	go mod 
+	go mod tidy
 
 lint:
 	golangci-lint run ./...
@@ -29,7 +26,7 @@ codegen:
 codegen-tag:
 	@mkdir -p cmd/$(fname)/http
 	oapi-codegen \
-		-generate chi-server,types \
+		-generate chi-server,types,strict-server \
 		-include-tags $(fname) \
 		-o cmd/$(fname)/http/spec.gen.go \
 		-package http \

@@ -1,7 +1,7 @@
 paths:
   /accounts:
     post:
-      operationId: createAccount
+      operationId: CreateAccount
       summary: Create a new account
       description: Create a new account
       tags:

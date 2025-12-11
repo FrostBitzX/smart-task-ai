@@ -2,4 +2,24 @@ description: Bad Request
 content:
   application/json:
     schema:
-      $ref: '../schemas/bad-request.yml#/bad-request'
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Operation failed"
+        data:
+          type: object
+          example: null
+        error:
+          type: object
+          example:
+            code: 400
+            message: "BAD_REQUEST"
+      required:
+        - success
+        - message
+        - data
+        - error
