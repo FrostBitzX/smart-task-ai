@@ -1,7 +1,7 @@
 package routes
 
 import (
-	accUseCase "github.com/FrostBitzX/smart-task-ai/internal/application/account/usecase"
+	accSignUpUC "github.com/FrostBitzX/smart-task-ai/internal/application/account/usecase"
 	accDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	repo "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/persistence"
@@ -16,8 +16,8 @@ func RegisterPublicRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 
 	accountRepository := repo.NewAccountRepository(db)
 	accountService := accDomain.NewAccountService(accountRepository)
-	accountUsecase := accUseCase.NewAccountUseCase(accountService, log)
-	accountHandler := accHandler.NewAccountHandler(accountUsecase, log)
+	accountSignUpUC := accSignUpUC.NewAccountUseCase(accountService, log)
+	accountHandler := accHandler.NewAccountHandler(accountSignUpUC, log)
 
 	api.Post("/signup", accountHandler.CreateAccount)
 }
