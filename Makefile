@@ -1,4 +1,4 @@
-.PHONY: tidy mod codegen codegen-tag lint
+.PHONY: tidy mod run codegen codegen-tag lint
 
 mod:
 	go mod tidy
