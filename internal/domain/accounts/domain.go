@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
+	"github.com/FrostBitzX/smart-task-ai/pkg/utils"
 )
 
 // Account represents the account data exposed via the HTTP API.
@@ -25,12 +26,12 @@ func FromAccountModel(m *entity.Account) *Account {
 	}
 
 	return &Account{
-		ID:        m.ID,
-		NodeID:    m.NodeID,
+		ID:        m.ID.String(),
+		NodeID:    m.NodeID.String(),
 		Username:  m.Username,
 		Email:     m.Email,
-		State:     m.State,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		State:     utils.SafeString(m.State),
+		CreatedAt: utils.SafeTime(m.CreatedAt),
+		UpdatedAt: utils.SafeTime(m.UpdatedAt),
 	}
 }
