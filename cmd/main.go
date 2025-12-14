@@ -11,8 +11,8 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/config"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type Application struct {
@@ -23,6 +23,7 @@ type Application struct {
 }
 
 func main() {
+	app := fiber.New()
 	cfg := config.NewConfig()
 	db := database.NewDB(cfg)
 
