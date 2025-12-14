@@ -12,6 +12,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/config"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type Application struct {
@@ -28,6 +29,12 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName: "smart-task-ai",
 	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+	}))
 
 	zapLogger := logger.NewZapLogger()
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
