@@ -1,7 +1,12 @@
 package accounts
 
-import "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
+import (
+	"context"
+
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
+)
 
 type AccountRepository interface {
-	FindByEmail(email string) (*entity.Account, error)
+	Create(ctx context.Context, acc *entity.Account) error
+	ExistsByUsername(ctx context.Context, username string) (bool, error)
 }
