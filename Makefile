@@ -24,10 +24,9 @@ codegen:
 
 # Generate code for a single tag (internal use only)
 codegen-tag:
-	@mkdir -p cmd/$(fname)/http
-	oapi-codegen \
-		-generate chi-server,types,strict-server \
-		-include-tags $(fname) \
-		-o cmd/$(fname)/http/spec.gen.go \
-		-package http \
-		$(OPENAPI_SPEC)
+    oapi-codegen \
+        -generate fiber,types,strict-server,spec \
+        -include-tags $(fname) \
+        -o internal/interfaces/http/$(fname)/spec.gen.go \
+        -package http \
+        $(OPENAPI_SPEC)
