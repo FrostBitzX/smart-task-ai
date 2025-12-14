@@ -24,7 +24,7 @@ codegen:
 
 # Generate code for a single tag (internal use only)
 codegen-tag:
-	@mkdir -p internal/interfaces/http/$(fname) \
+	@mkdir -p internal/interfaces/http/$(fname)
 	oapi-codegen \
 		-generate fiber,types,strict-server,spec \
 		-include-tags $(fname) \
