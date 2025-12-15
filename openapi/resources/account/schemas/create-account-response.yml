@@ -1,6 +1,8 @@
 type: object
 properties:
-  username:
+  account_id:
     type: string
+    description: The ID of the created account
+    example: "acc_KwSysDpxcBU9FNhGkn2dCf"
 required:
-  - username
+  - account_id

@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
+	"github.com/FrostBitzX/smart-task-ai/internal/utils"
 )
 
 type AccountUseCase struct {
@@ -27,8 +29,11 @@ func (uc *AccountUseCase) Execute(req *account.CreateAccountRequest) (*account.C
 		return nil, err
 	}
 
+	// Convert UUID to string with prefix
+	accountID := utils.ShortUUIDWithPrefix(acc.ID, entity.AccountIDPrefix)
+
 	res := &account.CreateAccountResponse{
-		Username: acc.Username,
+		AccountID: accountID,
 	}
 	return res, nil
 }

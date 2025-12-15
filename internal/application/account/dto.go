@@ -8,5 +8,5 @@ type CreateAccountRequest struct {
 }
 
 type CreateAccountResponse struct {
-	Username string `json:"username"`
+	AccountID string `json:"account_id"`
 }
