@@ -12,7 +12,7 @@ type CreateAccountRequest struct {
 	Username        string `json:"username" validate:"required,min=3,max=20"`
 	Email           string `json:"email" validate:"required,email"`
 	Password        string `json:"password" validate:"required,min=4"`
-	ConfirmPassword string `json:"confirmPassword" validate:"required,min=4,eqfield=Password"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,min=4,eqfield=Password"`
 }
 
 var validate = validator.New()
@@ -75,7 +75,7 @@ func getValidationErrorMessage(fe validator.FieldError) string {
 	case "email":
 		return "email format is invalid"
 	case "eqfield":
-		return "password and confirmPassword must match"
+		return "password and confirm_password must match"
 	default:
 		return strings.ToLower(field) + " is invalid"
 	}

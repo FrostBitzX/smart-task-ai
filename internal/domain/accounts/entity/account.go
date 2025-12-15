@@ -12,9 +12,9 @@ type Account struct {
 	Username  string     `gorm:"type:varchar(100);unique;not null"`
 	Email     string     `gorm:"type:varchar(255);unique;not null"`
 	Password  string     `gorm:"type:varchar(255);not null"`
-	State     *string    `gorm:"type:enum('pending','active','inactive')"`
-	CreatedAt *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
+	State     string     `gorm:"type:enum('active','inactive');not null;default:'active'"`
+	CreatedAt time.Time  `gorm:"not null"`
+	UpdatedAt time.Time  `gorm:"not null"`
 	DeletedAt *time.Time `gorm:"index"` // soft delete
 }
 

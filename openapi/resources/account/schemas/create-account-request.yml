@@ -10,11 +10,11 @@ properties:
   password:
     type: string
     minLength: 4
-  confirmPassword:
+  confirm_password:
     type: string
     minLength: 4
 required:
   - username
   - email
   - password
-  - confirmPassword
+  - confirm_password

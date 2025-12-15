@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
@@ -37,11 +38,15 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 
 	// create domain entity
+	now := time.Now()
 	acc := &entity.Account{
-		ID:       uuid.New(),
-		Username: req.Username,
-		Email:    req.Email,
-		Password: string(hashedPassword),
+		ID:        uuid.New(),
+		Username:  req.Username,
+		Email:     req.Email,
+		Password:  string(hashedPassword),
+		State:     "active",
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	// persist account to database
