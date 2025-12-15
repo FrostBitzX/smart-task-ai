@@ -18,7 +18,9 @@ func RegisterPublicRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	accountRepository := repo.NewAccountRepository(db)
 	accountService := accDomain.NewAccountService(accountRepository)
 	accountSignUpUC := accSignUpUC.NewAccountUseCase(accountService, log)
-	accountHandler := accHandler.NewAccountHandler(accountSignUpUC, log)
+	listAccountUC := accSignUpUC.NewListAccountUseCase(accountService, log)
+	accountHandler := accHandler.NewAccountHandler(accountSignUpUC, listAccountUC, log)
 
 	api.Post("/account", middlewares.ValidateCreateAccountRequest, accountHandler.CreateAccount)
+	api.Get("/account", middlewares.ValidateListAccountRequest, accountHandler.ListAccounts)
 }

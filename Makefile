@@ -9,9 +9,6 @@ run:
 lint:
 	golangci-lint run ./...
 
-run:
-	go run cmd/main.go
-
 # OpenAPI code generation
 OPENAPI_SPEC := openapi/openapi.yml
 # Use tag names to generate code for each endpoint group

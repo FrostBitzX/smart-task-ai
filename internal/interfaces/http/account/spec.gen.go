@@ -15,8 +15,18 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// ListAccountsParams defines parameters for ListAccounts.
+type ListAccountsParams struct {
+	// Limit Number of items per page
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of items to skip for pagination
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
 // CreateAccountJSONBody defines parameters for CreateAccount.
 type CreateAccountJSONBody struct {
@@ -31,6 +41,9 @@ type CreateAccountJSONRequestBody CreateAccountJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List all accounts
+	// (GET /accounts)
+	ListAccounts(c *fiber.Ctx, params ListAccountsParams) error
 	// Create a new account
 	// (POST /accounts)
 	CreateAccount(c *fiber.Ctx) error
@@ -42,6 +55,37 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc fiber.Handler
+
+// ListAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ListAccounts(c *fiber.Ctx) error {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAccountsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListAccounts(c, params)
+}
 
 // CreateAccount operation middleware
 func (siw *ServerInterfaceWrapper) CreateAccount(c *fiber.Ctx) error {
@@ -70,8 +114,47 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
+	router.Get(options.BaseURL+"/accounts", wrapper.ListAccounts)
+
 	router.Post(options.BaseURL+"/accounts", wrapper.CreateAccount)
 
+}
+
+type ListAccountsRequestObject struct {
+	Params ListAccountsParams
+}
+
+type ListAccountsResponseObject interface {
+	VisitListAccountsResponse(ctx *fiber.Ctx) error
+}
+
+type ListAccounts200JSONResponse struct {
+	// Data Response data
+	Data    map[string]interface{} `json:"data"`
+	Error   map[string]interface{} `json:"error"`
+	Message string                 `json:"message"`
+	Success bool                   `json:"success"`
+}
+
+func (response ListAccounts200JSONResponse) VisitListAccountsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type ListAccounts500JSONResponse struct {
+	Data    map[string]interface{} `json:"data"`
+	Error   map[string]interface{} `json:"error"`
+	Message string                 `json:"message"`
+	Success bool                   `json:"success"`
+}
+
+func (response ListAccounts500JSONResponse) VisitListAccountsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
 }
 
 type CreateAccountRequestObject struct {
@@ -141,6 +224,9 @@ func (response CreateAccount500JSONResponse) VisitCreateAccountResponse(ctx *fib
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// List all accounts
+	// (GET /accounts)
+	ListAccounts(ctx context.Context, request ListAccountsRequestObject) (ListAccountsResponseObject, error)
 	// Create a new account
 	// (POST /accounts)
 	CreateAccount(ctx context.Context, request CreateAccountRequestObject) (CreateAccountResponseObject, error)
@@ -157,6 +243,33 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// ListAccounts operation middleware
+func (sh *strictHandler) ListAccounts(ctx *fiber.Ctx, params ListAccountsParams) error {
+	var request ListAccountsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAccounts(ctx.UserContext(), request.(ListAccountsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAccounts")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(ListAccountsResponseObject); ok {
+		if err := validResponse.VisitListAccountsResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // CreateAccount operation middleware
@@ -193,20 +306,27 @@ func (sh *strictHandler) CreateAccount(ctx *fiber.Ctx) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xWwY7bNhD9FYLtUbaV3c1hdfN6nULowk5lp5fAELjUyGYikSpJZdcI9O8FKYqWbTmt",
-	"gzaH3GyS8zTvzbwhv2Iqykpw4Frh6CuWoCrBFdg/akckZKlfS59JNpLwVw1Km30quAZuf5KqKhglmgk+",
-	"+aQEt+F0ByUxvyopKpCatbAZ0XZV7yvAERbPn4Bq3AQYpBTS7MArKasC2m9kgKO7MAxwCUqRrQl5mD6m",
-	"yfyPD/PV2sSdAfmTPSi8rEDaBFFOWAEZ9oFKS8a3JlDVlIJSR4E5KRT4s89CFEA4bpoAGymYhAxHH33k",
-	"4eNBS7SjtTnL00BkoKhklUnL8CIZSpy+JptT/angecHoDxf/vi/+bLl49xTPfi7lZ52yQ7IzrkFyUowU",
-	"yC8gR16qH1eDt8cGiBfrebKYPqWrefLnPEnnSbJMfqqCxE5ztLKao7mNNOdaVbtpJWpJQaWEUlFznbrN",
-	"lEogGkZuuT+0jkthHMVkmVZEqRchM7NWMv4EfKt3OLobEAZKwgpzLheyJBpHbmXg6BWotTJ0S1uokrx2",
-	"R29M2Q+Rt2eRJ9p7mMBn5ZMIztluBjrmClFbg5yr2gUyy/y4sOsdoPgRiRzpHaAWMkMuwqTtu5RQmv7+",
-	"stqrx+qVPny4f7fY/faZ32SzHP+TDL0Ehig6h3e8eq0+bNRjBonjjVxTX7bxtW40d3EBRg+XUl4Xxf7f",
-	"ulPL+n8zJ+O5OFdi+j5GuZCoJJxsGd8iMyAZBQOvmbbsViWRGq2J+oymMZq+j3GAv4BULcKbcTgODSFR",
-	"AScVwxG+HYfjW9u3emcJTlw12wKJ1sYn49u2ESKIw0uvl0SnbJz5Q1O/64bCg8j2Vw3zXyXkOMK/TA5P",
-	"p4lrpcnVE6k5LpCpYevBwzPsJnxzVX6kKJY5jj5e6ub/KH9n/mbg1vn2Ny64r9kMXAOuWn5OHPmiCfBd",
-	"GF6i5DWcfPMda0HuvwOE9p4Mb78rjeF3hb3j6rIkcn+5szXZqt6gw612bvXUHX7AKCShsDpq0YG15oUS",
-	"LG57BXnYZtP8HQAA//8soYpIIgwAAA==",
+	"H4sIAAAAAAAC/9xYXU/jOBT9K5Z3HwPtAPNA3wp0VtUyhSnMsNKoqi7JTWOI7WA7lAr1v6/sfDRtXKDs",
+	"LlrNWxPnnut7fO6H+0xDyTMpUBhNe89Uoc6k0OgedAIKo2n9bnoL0Z7Chxy1seuhFAaF+wlZlrIQDJOi",
+	"c6elcOZhghzsr0zJDJVhBWwExr01iwxpj8rbOwwNXQYUlZLKruAT8CzFwkeEtHfU7QaUo9YwsyYn/bPp",
+	"ePDt++Dq2tq1gOovG1D0IkPlNkhiYClGtDbURjExs4Y6D0PUes0whlRj/e2tlCmCoMtlQC0VTGFEez9r",
+	"y5XzoAi0CmvS2qeFiFCHimV2WzYuiMi45NfuZpP/UIo4ZeGHk3/cJP/0YvTlfHj6azF/WjHro50Jg0pA",
+	"uqdRPaLaq6n6uDP4vJ4Aw9H1YDzqn0+vBuMfg/F0MB5fjH+pAxmWnJMrxzkZOEv7XcFqVa1krkLUUwhD",
+	"mQszLRer5zb3oUIwGE3Bra37vE6QGMZRG+AZmScoiEmQlFhkDpqU5jSgsVTcgtjQcM+a+VhEDiz1e3JL",
+	"BKJIodZExk1fTfwCwoPNIj9wLthDjoRFKAyLGao2+EoKEIbTb/pm9OPr5Yn56+7snI3i7Cvc3My9ojBg",
+	"cu13W6x5fImcW1lAaNijJYmJ8ufE4yHX9tg5bgmtXG172QDakCSzJ1ZDBzWnZTxBUxYTTxZtF1phuFe+",
+	"bnbHDd1JETPFpxloPZfKHR1n4hzFzCS0d/SSdl6Xwg6oTYI5PFWfHtj6srI8fI1RD5n1JoJ2tP+Q1KIS",
+	"t1mtDLelwvCsUkp5wFtz4M/51UKfZU/hyffjL6Pkj3txEJ3GrwqrsYHdQkyZNlWA+oUImUHuSbhzpo0N",
+	"rUKwaVV9+bvCmPbob53VaNcp3XZer5irJgJKwaJQ14wJKDy/DF+2zgqzYdjKSLfbNWwfgdsBW0wloKdc",
+	"Kk/luEnQJKisDhQSUEjsdySDGWoCj8BSuE2xKQmjck+fC2jKOPM0jlHOb4sy68IiGSqH3oT81K0B7Twx",
+	"Q2UBZRxrfAOikUTfs4zE0iFXJDTwvfBGGvC1H/uaiA0frGh3Ya4UCuMJwONi41QLfxVPdXjB6nDecMiN",
+	"ycM/N60HMy5zh5QzxvapatfhyAo8RVs1yi3FeZou3jos+TX078xKTMSyzUT/cugEwkFYicyInVdZiBbe",
+	"MOOiu+KgDLkGfU/6Q9K/HNKAPqLSBcKn/e5+1+kyQwEZoz16uN/dP3SJahIXYKeuOb1nOvOJd4xGMXxE",
+	"AiSt6lSa1rWKzJlJ1lUsK86HUVnc+qvCloECjgaVpr2fO6Qes+sPOSp7ZEXLq4W5Gs05PDFuJxSnb85E",
+	"+eTT+ruz1LeVOjcae6m8+zJtEqzfzg+63Z3uIJCmF7Fj0J9V72sbW/rY0nMX2al1VImxnHguB5U4iCqV",
+	"tpGhy4B+LtjxeaxZ7LzxpuduHTnnoBZV623q2WYXzHRjHKAT2zWl9uTGqZtDCBCB88Ywsp4AxUf9erWc",
+	"Kk9ktNjpyN93pFtG2uV67bLlbdmS5Kf/gSS3TY8fosl60NwU5NG7BNn8x82BHL8DJGz8ufHf5cUWZbdT",
+	"w51D8XYzO+rea1M7dTwaWV/AXV9Djg63rKL12DpZ/h0AAP//g/iY4swUAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

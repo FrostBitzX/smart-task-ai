@@ -15,6 +15,11 @@ type CreateAccountRequest struct {
 	ConfirmPassword string `json:"confirm_password" validate:"required,min=4,eqfield=Password"`
 }
 
+type ListAccountsRequest struct {
+	Limit  *int `query:"limit" validate:"omitempty,min=1,max=100"`
+	Offset *int `query:"offset" validate:"omitempty,min=0"`
+}
+
 var validate = validator.New()
 
 func ValidateCreateAccountRequest(c *fiber.Ctx) error {
@@ -28,6 +33,31 @@ func ValidateCreateAccountRequest(c *fiber.Ctx) error {
 			"error": fiber.Map{
 				"code":    400,
 				"message": "Invalid JSON format",
+			},
+		})
+	}
+
+	if err := validate.Struct(&req); err != nil {
+		return handleValidationError(c, err)
+	}
+
+	// Store validated request in context for handler to use
+	c.Locals("validatedRequest", req)
+	return c.Next()
+}
+
+func ValidateListAccountRequest(c *fiber.Ctx) error {
+	var req ListAccountsRequest
+
+	// Parse query parameters for GET request
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Operation failed",
+			"data":    nil,
+			"error": fiber.Map{
+				"code":    400,
+				"message": "Invalid query parameters",
 			},
 		})
 	}
