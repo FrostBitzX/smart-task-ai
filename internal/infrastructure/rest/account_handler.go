@@ -32,10 +32,9 @@ func (h *AccountHandler) CreateAccount(c *fiber.Ctx) error {
 	}
 
 	data, err := h.AccountUC.Execute(req)
-
 	if err != nil {
-		return err
+		return responses.Error(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(data)
+	return responses.Success(c, data, "Account created successfully")
 }

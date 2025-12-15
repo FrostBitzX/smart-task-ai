@@ -20,11 +20,11 @@ func (r *accountRepository) CreateAccount(ctx context.Context, acc *entity.Accou
 	return r.db.WithContext(ctx).Create(acc).Error
 }
 
-func (r *accountRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+func (r *accountRepository) ExistsAccount(ctx context.Context, username, email string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&entity.Account{}).
-		Where("username = ?", username).
+		Where("username = ? OR email = ?", username, email).
 		Count(&count).Error
 
 	return count > 0, err
