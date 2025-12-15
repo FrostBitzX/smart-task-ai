@@ -19,12 +19,8 @@ func NewAccountService(repo accounts.AccountRepository) *AccountService {
 	return &AccountService{repo: repo}
 }
 
-// [TODO]: not return entire entity, use model
 func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateAccountRequest) (*entity.Account, error) {
-	if req.Username == "" || req.Email == "" || req.Password == "" {
-		return nil, errors.New("invalid input")
-	}
-
+	// Check if username already exists
 	exists, err := s.repo.ExistsByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, err
@@ -43,7 +39,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 
 	// persist
-	if err := s.repo.Create(ctx, acc); err != nil {
+	if err := s.repo.CreateAccount(ctx, acc); err != nil {
 		return nil, err
 	}
 

@@ -16,7 +16,7 @@ func NewAccountRepository(db *gorm.DB) accounts.AccountRepository {
 	return &accountRepository{db: db}
 }
 
-func (r *accountRepository) Create(ctx context.Context, acc *entity.Account) error {
+func (r *accountRepository) CreateAccount(ctx context.Context, acc *entity.Account) error {
 	return r.db.WithContext(ctx).Create(acc).Error
 }
 

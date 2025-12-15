@@ -7,6 +7,6 @@ import (
 )
 
 type AccountRepository interface {
-	Create(ctx context.Context, acc *entity.Account) error
+	CreateAccount(ctx context.Context, acc *entity.Account) error
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
 }

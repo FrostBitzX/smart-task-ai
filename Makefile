@@ -1,4 +1,4 @@
-.PHONY: tidy mod codegen codegen-tag lint
+.PHONY: tidy mod codegen codegen-tag lint run
 
 mod:
 	go mod tidy
@@ -6,9 +6,12 @@ mod:
 lint:
 	golangci-lint run ./...
 
+run:
+	go run cmd/main.go
+
 # OpenAPI code generation
 OPENAPI_SPEC := openapi/openapi.yml
-# ดึงรายชื่อ tag ทั้งหมดจากไฟล์ OPENAPI_SPEC (ดูจากบรรทัดที่มี `- name:` ใต้ section tags)
+# Use tag names to generate code for each endpoint group
 OPENAPI_TAGS := $(shell grep '^[[:space:]]*- name:' $(OPENAPI_SPEC) | awk '{print $$3}')
 
 codegen:
