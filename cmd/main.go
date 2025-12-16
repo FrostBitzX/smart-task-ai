@@ -11,7 +11,9 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/config"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 type Application struct {
@@ -22,6 +24,8 @@ type Application struct {
 }
 
 func main() {
+	_ = godotenv.Load()
+
 	cfg := config.NewConfig()
 	db := database.NewDB(cfg)
 
