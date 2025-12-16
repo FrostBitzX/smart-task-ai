@@ -1,5 +1,5 @@
 paths:
-  /accounts:
+  /api/signup:
     post:
       operationId: CreateAccount
       summary: Create a new account
@@ -31,6 +31,39 @@ paths:
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
 
+  /api/login:
+    post:
+      operationId: Login
+      summary: Login account
+      description: Login account
+      tags:
+        - account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/login-request.yml"
+      responses:
+        "200":
+          description: "Login successfully"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/login-response.yml"
+                  - $ref: "../../../shared/schemas/success.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "409":
+          $ref: "../../../shared/responses/conflict.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
+
+  /api/accounts:
     get:
       operationId: ListAccounts
       summary: List all accounts

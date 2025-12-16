@@ -13,6 +13,11 @@ tags:
 
 # All paths are referenced from external files
 paths:
-  # Account endpoints
-  /accounts:
-    $ref: "./resources/account/paths/collection.yml#/paths/~1accounts"
+  /api/signup:
+    $ref: "./resources/account/paths/collection.yml#/paths/~1api~1signup"
+
+  /api/login:
+    $ref: "./resources/account/paths/collection.yml#/paths/~1api~1login"
+
+  /api/accounts:
+    $ref: "./resources/account/paths/collection.yml#/paths/~1api~1accounts"
