@@ -58,6 +58,14 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	return acc, nil
 }
 
+func (s *AccountService) ListAccounts(ctx context.Context, limit, offset int) ([]*entity.Account, int, error) {
+	accounts, total, err := s.repo.ListAccounts(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, apperrors.NewInternalServerError("failed to list accounts", "LIST_ACCOUNTS_ERROR", err)
+	}
+	return accounts, total, nil
+}
+
 func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (string, error) {
 	acc, err := s.repo.GetByUsername(ctx, req.Username)
 	if err != nil {

@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const AccountIDPrefix = "acc"
+
 type Account struct {
 	ID        uuid.UUID  `gorm:"type:char(36);primaryKey"`
 	NodeID    *uuid.UUID `gorm:"type:char(36)"`

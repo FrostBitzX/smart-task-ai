@@ -11,9 +11,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../schemas/create-account-request.yml'
+              $ref: "../schemas/create-account-request.yml"
       responses:
-        '201':
+        "201":
           description: Account created successfully
           content:
             application/json:
@@ -22,11 +22,48 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '../schemas/create-account-response.yml'
-                  - $ref: '../../../shared/schemas/success.yml'
-        '400':
-          $ref: '../../../shared/responses/bad-request.yml'
-        '409':
-          $ref: '../../../shared/responses/conflict.yml'
-        '500':
-          $ref: '../../../shared/responses/internal-server-error.yml'
+                        $ref: "../schemas/create-account-response.yml"
+                  - $ref: "../../../shared/schemas/success.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "409":
+          $ref: "../../../shared/responses/conflict.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
+
+    get:
+      operationId: ListAccounts
+      summary: List all accounts
+      description: Retrieve a list of all accounts with pagination
+      tags:
+        - account
+      parameters:
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of items to skip for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Accounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/list-accounts-response.yml"
+                  - $ref: "../../../shared/schemas/success.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
