@@ -5,6 +5,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
+	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 )
 
@@ -20,8 +21,12 @@ func NewLoginUseCase(accSvc *service.AccountService, l logger.Logger) *LoginUseC
 	}
 }
 
-func (u *LoginUseCase) Execute(req *account.LoginRequest) (*account.LoginResponse, error) {
-	token, err := u.accountService.Login(context.Background(), req)
+func (u *LoginUseCase) Execute(ctx context.Context, req *account.LoginRequest) (*account.LoginResponse, error) {
+	if req == nil {
+		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
+
+	token, err := u.accountService.Login(ctx, req)
 
 	if err != nil {
 		return nil, err

@@ -41,7 +41,7 @@ func (h *AccountHandler) CreateAccount(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	data, err := h.CreateAccountUC.Execute(req)
+	data, err := h.CreateAccountUC.Execute(c.Context(), req)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -53,9 +53,7 @@ func (h *AccountHandler) ListAccounts(c *fiber.Ctx) error {
 	// Get validated request from middleware context
 	req, err := requests.ParseAndValidate[account.ListAccountsRequest](c)
 	if err != nil {
-		h.logger.Warn("Failed to validate request", map[string]interface{}{
-			"error": err.Error(),
-		})
+		h.logger.Warn("Failed to get validated request from context")
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
@@ -65,7 +63,7 @@ func (h *AccountHandler) ListAccounts(c *fiber.Ctx) error {
 		Offset: req.Offset,
 	}
 
-	data, err := h.ListAccountUC.Execute(domainReq)
+	data, err := h.ListAccountUC.Execute(c.Context(), domainReq)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -82,7 +80,7 @@ func (h *AccountHandler) Login(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	data, err := h.LoginUC.Execute(req)
+	data, err := h.LoginUC.Execute(c.Context(), req)
 
 	return responses.Success(c, data, "Login successfully")
 }

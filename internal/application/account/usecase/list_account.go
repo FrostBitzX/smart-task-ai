@@ -6,6 +6,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
+	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
 )
@@ -22,7 +23,10 @@ func NewListAccountUseCase(svc *service.AccountService, l logger.Logger) *ListAc
 	}
 }
 
-func (uc *ListAccountUseCase) Execute(req *account.ListAccountsRequest) (*account.ListAccountsResponse, error) {
+func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAccountsRequest) (*account.ListAccountsResponse, error) {
+	if req == nil {
+		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
 
 	// Set pagination defaults
 	var limit int
@@ -40,7 +44,7 @@ func (uc *ListAccountUseCase) Execute(req *account.ListAccountsRequest) (*accoun
 	}
 
 	// Get accounts from service
-	accounts, total, err := uc.accountService.ListAccounts(context.Background(), limit, offset)
+	accounts, total, err := uc.accountService.ListAccounts(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}

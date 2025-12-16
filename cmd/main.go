@@ -12,8 +12,6 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/config"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
 	"github.com/gofiber/fiber/v2"
-
-	jwtware "github.com/gofiber/contrib/jwt"
 )
 
 type Application struct {
@@ -33,9 +31,6 @@ func main() {
 
 	zapLogger := logger.NewZapLogger()
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
-	app.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
-	}))
 
 	routes.RegisterPublicRoutes(app, db, zapLogger)
 

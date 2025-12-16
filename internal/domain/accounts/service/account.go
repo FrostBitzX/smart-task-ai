@@ -23,6 +23,10 @@ func NewAccountService(repo accounts.AccountRepository) *AccountService {
 }
 
 func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateAccountRequest) (*entity.Account, error) {
+	if req == nil {
+		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
+	
 	// Check if username or email already exists
 	exists, err := s.repo.ExistsAccount(ctx, req.Username, req.Email)
 	if err != nil {
@@ -30,6 +34,10 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 	if exists {
 		return nil, apperrors.NewBadRequestError("username or email already exists", "USERNAME_OR_EMAIL_EXISTS", nil)
+	}
+
+	if req.Password != req.ConfirmPassword {
+		return nil, apperrors.NewBadRequestError("password and confirm password does not match", "PASSWORD_DOES_NOT_MATCH_ERROR", nil)
 	}
 
 	// hash password
@@ -78,8 +86,10 @@ func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (
 	}
 
 	claims := jwt.MapClaims{
-		"name": acc.Username,
-		"exp":  time.Now().Add(time.Hour * 72).Unix(),
+		"AccountId": acc.ID,
+		"Email":     acc.Email,
+		"Username":  acc.Username,
+		"Exp":       time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
