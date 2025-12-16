@@ -11,14 +11,20 @@ import (
 )
 
 type AccountHandler struct {
-	AccountUC *usecase.AccountUseCase
-	logger    logger.Logger
+	CreateAccountUC *usecase.CreateAccountUseCase
+	LoginUC         *usecase.LoginUseCase
+	logger          logger.Logger
 }
 
-func NewAccountHandler(accUC *usecase.AccountUseCase, l logger.Logger) *AccountHandler {
+func NewAccountHandler(
+	create *usecase.CreateAccountUseCase,
+	login *usecase.LoginUseCase,
+	l logger.Logger,
+) *AccountHandler {
 	return &AccountHandler{
-		AccountUC: accUC,
-		logger:    l,
+		CreateAccountUC: create,
+		LoginUC:         login,
+		logger:          l,
 	}
 }
 
@@ -31,10 +37,27 @@ func (h *AccountHandler) CreateAccount(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	data, err := h.AccountUC.Execute(req)
+	data, err := h.CreateAccountUC.Execute(req)
 	if err != nil {
 		return responses.Error(c, err)
 	}
 
 	return responses.Success(c, data, "Account created successfully")
+}
+
+func (h *AccountHandler) Login(c *fiber.Ctx) error {
+	req, err := requests.ParseAndValidate[account.LoginRequest](c)
+	if err != nil {
+		h.logger.Warn("Failed to validate request", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return responses.Error(c, apperror.ErrInvalidData)
+	}
+
+	data, err := h.LoginUC.Execute(req)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Login successfully")
 }

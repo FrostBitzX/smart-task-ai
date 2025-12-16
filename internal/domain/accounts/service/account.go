@@ -6,6 +6,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
@@ -55,4 +56,34 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 
 	return acc, nil
+}
+
+func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (string, error) {
+	acc, err := s.repo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return "", apperrors.NewBadRequestError("user does not exist", "LOGIN_ERROR", nil)
+	}
+
+	// compare password
+	if err := bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(req.Password)); err != nil {
+		return "", apperrors.NewBadRequestError("invalid username or password", "LOGIN_ERROR", nil)
+	}
+
+	claims := jwt.MapClaims{
+		"name": acc.Username,
+		"exp":  time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return "", apperrors.NewInternalServerError(
+			"failed to sign jwt",
+			"JWT_SIGN_ERROR",
+			err,
+		)
+	}
+
+	return t, nil
 }

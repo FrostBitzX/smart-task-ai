@@ -10,3 +10,12 @@ type CreateAccountRequest struct {
 type CreateAccountResponse struct {
 	Username string `json:"username"`
 }
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}

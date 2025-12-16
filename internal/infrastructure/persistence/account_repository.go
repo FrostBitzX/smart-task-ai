@@ -29,3 +29,17 @@ func (r *accountRepository) ExistsAccount(ctx context.Context, username, email s
 
 	return count > 0, err
 }
+
+func (r *accountRepository) GetByUsername(ctx context.Context, username string) (*entity.Account, error) {
+	var account entity.Account
+
+	err := r.db.WithContext(ctx).
+		Where("username = ?", username).
+		First(&account).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}

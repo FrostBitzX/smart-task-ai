@@ -8,19 +8,19 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 )
 
-type AccountUseCase struct {
+type CreateAccountUseCase struct {
 	accountService *service.AccountService
 	logger         logger.Logger
 }
 
-func NewAccountUseCase(svc *service.AccountService, l logger.Logger) *AccountUseCase {
-	return &AccountUseCase{
+func NewAccountUseCase(svc *service.AccountService, l logger.Logger) *CreateAccountUseCase {
+	return &CreateAccountUseCase{
 		accountService: svc,
 		logger:         l,
 	}
 }
 
-func (uc *AccountUseCase) Execute(req *account.CreateAccountRequest) (*account.CreateAccountResponse, error) {
+func (uc *CreateAccountUseCase) Execute(req *account.CreateAccountRequest) (*account.CreateAccountResponse, error) {
 	acc, err := uc.accountService.CreateAccount(context.Background(), req)
 
 	if err != nil {

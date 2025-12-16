@@ -17,8 +17,8 @@ type CreateAccountRequest struct {
 
 var validate = validator.New()
 
-func ValidateCreateAccountRequest(c *fiber.Ctx) error {
-	var req CreateAccountRequest
+func ValidateCreateAccountRequest[T any](c *fiber.Ctx) error {
+	var req T
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
