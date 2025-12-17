@@ -37,6 +37,7 @@ func main() {
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
 
 	routes.RegisterPublicRoutes(app, db, zapLogger)
+	routes.RegisterPrivateRoutes(app, db, zapLogger)
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
