@@ -11,7 +11,9 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/config"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 type Application struct {
@@ -22,6 +24,8 @@ type Application struct {
 }
 
 func main() {
+	_ = godotenv.Load()
+
 	cfg := config.NewConfig()
 	db := database.NewDB(cfg)
 
@@ -33,6 +37,7 @@ func main() {
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
 
 	routes.RegisterPublicRoutes(app, db, zapLogger)
+	routes.RegisterPrivateRoutes(app, db, zapLogger)
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {

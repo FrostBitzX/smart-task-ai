@@ -29,3 +29,35 @@ func (r *accountRepository) ExistsAccount(ctx context.Context, username, email s
 
 	return count > 0, err
 }
+
+func (r *accountRepository) GetByUsername(ctx context.Context, username string) (*entity.Account, error) {
+	var account entity.Account
+
+	err := r.db.WithContext(ctx).
+		Where("username = ?", username).
+		First(&account).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}
+
+func (r *accountRepository) ListAccounts(ctx context.Context, limit, offset int) ([]*entity.Account, int, error) {
+	var accounts []*entity.Account
+	var total int64
+
+	// Get total count
+	if err := r.db.WithContext(ctx).Model(&entity.Account{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	err := r.db.WithContext(ctx).
+		Limit(limit).
+		Offset(offset).
+		Find(&accounts).Error
+
+	return accounts, int(total), err
+}

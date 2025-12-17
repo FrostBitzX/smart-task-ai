@@ -6,6 +6,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
@@ -22,6 +23,10 @@ func NewAccountService(repo accounts.AccountRepository) *AccountService {
 }
 
 func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateAccountRequest) (*entity.Account, error) {
+	if req == nil {
+		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
+	
 	// Check if username or email already exists
 	exists, err := s.repo.ExistsAccount(ctx, req.Username, req.Email)
 	if err != nil {
@@ -29,6 +34,10 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 	if exists {
 		return nil, apperrors.NewBadRequestError("username or email already exists", "USERNAME_OR_EMAIL_EXISTS", nil)
+	}
+
+	if req.Password != req.ConfirmPassword {
+		return nil, apperrors.NewBadRequestError("password and confirm password does not match", "PASSWORD_DOES_NOT_MATCH_ERROR", nil)
 	}
 
 	// hash password
@@ -55,4 +64,44 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	}
 
 	return acc, nil
+}
+
+func (s *AccountService) ListAccounts(ctx context.Context, limit, offset int) ([]*entity.Account, int, error) {
+	accounts, total, err := s.repo.ListAccounts(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, apperrors.NewInternalServerError("failed to list accounts", "LIST_ACCOUNTS_ERROR", err)
+	}
+	return accounts, total, nil
+}
+
+func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (string, error) {
+	acc, err := s.repo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return "", apperrors.NewBadRequestError("user does not exist", "LOGIN_ERROR", nil)
+	}
+
+	// compare password
+	if err := bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(req.Password)); err != nil {
+		return "", apperrors.NewBadRequestError("invalid username or password", "LOGIN_ERROR", nil)
+	}
+
+	claims := jwt.MapClaims{
+		"AccountId": acc.ID,
+		"Email":     acc.Email,
+		"Username":  acc.Username,
+		"Exp":       time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return "", apperrors.NewInternalServerError(
+			"failed to sign jwt",
+			"JWT_SIGN_ERROR",
+			err,
+		)
+	}
+
+	return t, nil
 }
