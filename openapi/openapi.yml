@@ -10,9 +10,12 @@ servers: []
 tags:
   - name: account
     description: Operations related to account management
+  - name: profile
+    description: Operations related to profile management
 
 # All paths are referenced from external files
 paths:
+  # Account endpoints
   /api/signup:
     $ref: "./resources/account/paths/collection.yml#/paths/~1api~1signup"
 
@@ -21,3 +24,7 @@ paths:
 
   /api/accounts:
     $ref: "./resources/account/paths/collection.yml#/paths/~1api~1accounts"
+
+  # Profile endpoints
+  /api/profiles:
+    $ref: "./resources/profile/paths/collection.yml#/paths/~1api~1profiles"

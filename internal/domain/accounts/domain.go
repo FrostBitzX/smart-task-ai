@@ -6,6 +6,11 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 )
 
+type State struct {
+	Active   string
+	Inactive string
+}
+
 // Account represents the account data exposed via the HTTP API.
 // It is mapped from the domain/entity Account model.
 type Account struct {
@@ -13,7 +18,7 @@ type Account struct {
 	NodeID    string    `json:"nodeId"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	State     string    `json:"state"`
+	State     State     `json:"state"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -29,7 +34,7 @@ func FromAccountModel(m *entity.Account) *Account {
 		NodeID:    "",
 		Username:  m.Username,
 		Email:     m.Email,
-		State:     m.State,
+		State:     State{Active: m.State, Inactive: m.State},
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}

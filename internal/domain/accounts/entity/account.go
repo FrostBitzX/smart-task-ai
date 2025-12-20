@@ -17,7 +17,6 @@ type Account struct {
 	State     string     `gorm:"type:enum('active','inactive');not null;default:'active'"`
 	CreatedAt time.Time  `gorm:"not null"`
 	UpdatedAt time.Time  `gorm:"not null"`
-	DeletedAt *time.Time `gorm:"index"` // soft delete
 }
 
 func (Account) TableName() string {

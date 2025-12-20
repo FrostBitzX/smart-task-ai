@@ -1,4 +1,4 @@
-package account
+package rest
 
 import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
