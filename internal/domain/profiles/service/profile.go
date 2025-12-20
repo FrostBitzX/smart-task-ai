@@ -30,7 +30,7 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 	now := time.Now()
 	prof := &entity.Profile{
 		ID:         uuid.New(),
-		AccountID:  req.AccountID,
+		AccountID:  uuid.MustParse(req.AccountID),
 		FirstName:  lo.ToPtr(req.FirstName),
 		LastName:   lo.ToPtr(req.LastName),
 		Nickname:   lo.ToPtr(req.Nickname),
