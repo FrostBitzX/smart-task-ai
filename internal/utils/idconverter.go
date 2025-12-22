@@ -19,7 +19,7 @@ func ParseShortUUID(shortID string, prefix string) (uuid.UUID, error) {
 	if len(shortID) < prefixLen {
 		return uuid.Nil, fmt.Errorf("invalid short UUID format")
 	}
-	
+
 	actualShortID := shortID[prefixLen:]
 	return shortuuid.DefaultEncoder.Decode(actualShortID)
 }

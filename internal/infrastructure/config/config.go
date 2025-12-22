@@ -28,12 +28,24 @@ func NewConfig() *Config {
 
 	viper.AutomaticEnv()
 
-	viper.BindEnv("FRONTEND_URL")
-	viper.BindEnv("DB_HOST")
-	viper.BindEnv("DB_DATABASE")
-	viper.BindEnv("DB_USERNAME")
-	viper.BindEnv("DB_PASSWORD")
-	viper.BindEnv("DB_PORT")
+	if err := viper.BindEnv("FRONTEND_URL"); err != nil {
+		log.Fatalf("Unable to bind FRONTEND_URL: %v", err)
+	}
+	if err := viper.BindEnv("DB_HOST"); err != nil {
+		log.Fatalf("Unable to bind DB_HOST: %v", err)
+	}
+	if err := viper.BindEnv("DB_DATABASE"); err != nil {
+		log.Fatalf("Unable to bind DB_DATABASE: %v", err)
+	}
+	if err := viper.BindEnv("DB_USERNAME"); err != nil {
+		log.Fatalf("Unable to bind DB_USERNAME: %v", err)
+	}
+	if err := viper.BindEnv("DB_PASSWORD"); err != nil {
+		log.Fatalf("Unable to bind DB_PASSWORD: %v", err)
+	}
+	if err := viper.BindEnv("DB_PORT"); err != nil {
+		log.Fatalf("Unable to bind DB_PORT: %v", err)
+	}
 
 	if err := viper.Unmarshal(config); err != nil {
 		log.Fatalln("Unable to decode into struct", err)

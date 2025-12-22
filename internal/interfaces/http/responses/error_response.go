@@ -29,7 +29,7 @@ type ErrorDetail struct {
 }
 
 func Error(c *fiber.Ctx, err error) error {
-	status := fiber.StatusInternalServerError
+	var status int
 	code := "INTERNAL_SERVER_ERROR"
 	message := "Internal server error"
 
