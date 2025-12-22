@@ -81,6 +81,9 @@ func (h *AccountHandler) Login(c *fiber.Ctx) error {
 	}
 
 	data, err := h.LoginUC.Execute(c.Context(), req)
+	if err != nil {
+		return responses.Error(c, err)
+	}
 
 	return responses.Success(c, data, "Login successfully")
 }

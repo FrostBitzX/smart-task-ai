@@ -12,31 +12,43 @@ import (
 
 type ProfileHandler struct {
 	CreateProfileUC *usecase.CreateProfileUseCase
+	GetProfileUC    *usecase.GetProfileUseCase
 	logger          logger.Logger
 }
 
 func NewProfileHandler(
 	create *usecase.CreateProfileUseCase,
+	get *usecase.GetProfileUseCase,
 	l logger.Logger,
 ) *ProfileHandler {
 	return &ProfileHandler{
 		CreateProfileUC: create,
+		GetProfileUC:    get,
 		logger:          l,
 	}
 
 }
 
 func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
-	// Get AccountID from JWT claims
-	jwtClaims := c.Locals("jwt_claims").(map[string]interface{})
-	accountID := jwtClaims["AccountId"].(string)
-
 	req, err := requests.ParseAndValidate[profile.CreateProfileRequest](c)
 	if err != nil {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return responses.Error(c, apperror.ErrInvalidData)
+	}
+
+	// Get AccountID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
 	// Set AccountID from JWT
@@ -48,4 +60,30 @@ func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Profile created successfully")
+}
+
+func (h *ProfileHandler) GetProfile(c *fiber.Ctx) error {
+	// Get AccountID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	req := &profile.GetProfileByAccountIDRequest{
+		AccountID: accountID,
+	}
+
+	data, err := h.GetProfileUC.Execute(c.Context(), req)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Profile retrieved successfully")
 }

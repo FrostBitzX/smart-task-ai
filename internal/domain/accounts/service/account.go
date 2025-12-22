@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
@@ -26,7 +27,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	if req == nil {
 		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
-	
+
 	// Check if username or email already exists
 	exists, err := s.repo.ExistsAccount(ctx, req.Username, req.Email)
 	if err != nil {
@@ -94,7 +95,16 @@ func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	t, err := token.SignedString([]byte("secret"))
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return "", apperrors.NewInternalServerError(
+			"JWT_SECRET environment variable not set",
+			"JWT_SECRET_MISSING",
+			nil,
+		)
+	}
+
+	t, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", apperrors.NewInternalServerError(
 			"failed to sign jwt",

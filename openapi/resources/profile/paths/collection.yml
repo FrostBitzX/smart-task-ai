@@ -28,3 +28,26 @@ paths:
           $ref: "../../../shared/responses/bad-request.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
+
+    get:
+      operationId: GetProfile
+      summary: Get profile by account ID
+      description: Get profile by account ID
+      tags:
+        - profile
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/get-profile-response.yml"
+                  - $ref: "../../../shared/schemas/success.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"

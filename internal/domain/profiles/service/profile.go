@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/profile"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
+	"gorm.io/gorm"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
@@ -21,9 +23,27 @@ func NewProfileService(repo profiles.ProfileRepository) *ProfileService {
 	return &ProfileService{repo: repo}
 }
 
+func (s *ProfileService) GetProfileByAccountID(ctx context.Context, accountID string) (*entity.Profile, error) {
+	prof, err := s.repo.GetProfileByAccountID(ctx, accountID)
+	if err != nil {
+		return nil, apperrors.NewInternalServerError("failed to get profile by account id", "GET_PROFILE_BY_ACCOUNT_ID_ERROR", err)
+	}
+
+	return prof, nil
+}
+
 func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateProfileRequest) (*entity.Profile, error) {
 	if req == nil {
 		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
+
+	// Check if profile already created
+	exists, err := s.GetProfileByAccountID(ctx, req.AccountID)
+	if err != nil {
+		return nil, apperrors.NewInternalServerError("failed to get profile by account id", "GET_PROFILE_BY_ACCOUNT_ID_ERROR", err)
+	}
+	if exists != nil {
+		return nil, apperrors.NewBadRequestError("profile already exists", "PROFILE_ALREADY_EXISTS", nil)
 	}
 
 	// create domain entity
@@ -31,17 +51,25 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 	prof := &entity.Profile{
 		ID:         uuid.New(),
 		AccountID:  uuid.MustParse(req.AccountID),
-		FirstName:  lo.ToPtr(req.FirstName),
-		LastName:   lo.ToPtr(req.LastName),
-		Nickname:   lo.ToPtr(req.Nickname),
-		AvatarPath: lo.ToPtr(req.AvatarPath),
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
+		Nickname:   req.Nickname,
+		AvatarPath: req.AvatarPath,
 		State:      "active",
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
 
 	// persist account to database
-	if err := s.repo.CreateProfile(ctx, prof); err != nil {
+	err = s.repo.CreateProfile(ctx, prof)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return nil, apperrors.NewBadRequestError(
+				fmt.Sprintf("profile with account ID %s already exists", req.AccountID),
+				"PROFILE_ALREADY_EXISTS",
+				err,
+			)
+		}
 		return nil, apperrors.NewInternalServerError("failed to create profile", "CREATE_PROFILE_ERROR", err)
 	}
 

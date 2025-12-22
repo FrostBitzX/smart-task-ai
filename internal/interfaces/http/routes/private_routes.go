@@ -20,8 +20,10 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	profileRepository := repo.NewProfileRepository(db)
 	profileService := profileDomain.NewProfileService(profileRepository)
 	createProfileUC := profileUC.NewCreateProfileUseCase(profileService, log)
-	profileHandlerInstance := profileHandler.NewProfileHandler(createProfileUC, log)
+	getProfileUC := profileUC.NewGetProfileUseCase(profileService, log)
+	profileHandlerInstance := profileHandler.NewProfileHandler(createProfileUC, getProfileUC, log)
 
 	// Profile routes
 	api.Post("/profile", profileHandlerInstance.CreateProfile)
+	api.Get("/profile", profileHandlerInstance.GetProfile)
 }

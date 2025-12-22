@@ -10,11 +10,11 @@ const ProfileIDPrefix = "prof"
 
 type Profile struct {
 	ID         uuid.UUID  `gorm:"type:char(36);primaryKey"`
-	NodeID     *uuid.UUID  `gorm:"type:char(36);not null"`
+	NodeID     *uuid.UUID `gorm:"type:char(36)"`
 	AccountID  uuid.UUID  `gorm:"type:char(36);unique;not null"`
-	FirstName  *string    `gorm:"type:varchar(100)"`
-	LastName   *string    `gorm:"type:varchar(100)"`
-	Nickname   *string    `gorm:"type:varchar(50)"`
+	FirstName  string     `gorm:"type:varchar(100);not null"`
+	LastName   string     `gorm:"type:varchar(100);not null"`
+	Nickname   string     `gorm:"type:varchar(50);not null"`
 	AvatarPath *string    `gorm:"type:varchar(255)"`
 	State      string     `gorm:"type:enum('active','inactive');not null"`
 	CreatedAt  time.Time  `gorm:"not null;default:CURRENT_TIMESTAMP"`
