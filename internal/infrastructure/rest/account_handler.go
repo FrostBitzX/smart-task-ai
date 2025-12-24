@@ -50,20 +50,15 @@ func (h *AccountHandler) CreateAccount(c *fiber.Ctx) error {
 }
 
 func (h *AccountHandler) ListAccounts(c *fiber.Ctx) error {
-	// Get validated request from middleware context
-	req, err := requests.ParseAndValidate[account.ListAccountsRequest](c)
+	req, err := requests.ParseAndValidateQuery[account.ListAccountsRequest](c)
 	if err != nil {
-		h.logger.Warn("Failed to get validated request from context")
+		h.logger.Warn("Invalid query parameters", map[string]interface{}{
+			"error": err.Error(),
+		})
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	// Convert middleware request to domain request
-	domainReq := &account.ListAccountsRequest{
-		Limit:  req.Limit,
-		Offset: req.Offset,
-	}
-
-	data, err := h.ListAccountUC.Execute(c.Context(), domainReq)
+	data, err := h.ListAccountUC.Execute(c.Context(), req)
 	if err != nil {
 		return responses.Error(c, err)
 	}

@@ -31,6 +31,28 @@ func ParseAndValidate[T any](c *fiber.Ctx) (*T, error) {
 	return &body, nil
 }
 
+func ParseAndValidateQuery[T any](c *fiber.Ctx) (*T, error) {
+	var q T
+
+	if err := c.QueryParser(&q); err != nil {
+		return nil, c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Operation failed",
+			"data":    nil,
+			"error": fiber.Map{
+				"code":    400,
+				"message": "Invalid query parameters",
+			},
+		})
+	}
+
+	if err := validate.Struct(&q); err != nil {
+		return nil, validationErrorResponse(c, err)
+	}
+
+	return &q, nil
+}
+
 func ParseAndValidateDetailed[T any](c *fiber.Ctx) (*T, map[string]string, error) {
 	var body T
 	if err := c.BodyParser(&body); err != nil {
