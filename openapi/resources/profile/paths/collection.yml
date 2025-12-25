@@ -51,3 +51,32 @@ paths:
           $ref: "../../../shared/responses/bad-request.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
+
+    patch:
+      operationId: UpdateProfile
+      summary: Update profile by account ID
+      description: Update profile by account ID
+      tags:
+        - profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/update-profile-request.yml"
+      responses:
+        "201":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/update-profile-response.yml"
+                  - $ref: "../../../shared/schemas/success.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"

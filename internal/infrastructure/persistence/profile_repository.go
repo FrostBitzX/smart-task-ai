@@ -31,3 +31,7 @@ func (r *profileRepository) GetProfileByAccountID(ctx context.Context, accountID
 	}
 	return &profile, nil
 }
+
+func (r *profileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile) error {
+	return r.db.WithContext(ctx).Save(prof).Error
+}

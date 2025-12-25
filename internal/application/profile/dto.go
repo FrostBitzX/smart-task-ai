@@ -29,3 +29,20 @@ type GetProfileByAccountIDResponse struct {
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
+
+type UpdateProfileRequest struct {
+	AccountID  string  `json:"account_id"`
+	FirstName  string  `json:"first_name" validate:"min=0,max=20"`
+	LastName   string  `json:"last_name" validate:"min=0,max=20"`
+	Nickname   string  `json:"nickname" validate:"min=0,max=20"`
+	AvatarPath *string `json:"avatar_path,omitempty"`
+}
+
+type UpdateProfileResponse struct {
+	AccountID  string  `json:"account_id"`
+	ProfileID  string  `json:"profile_id"`
+	FirstName  string  `json:"first_name" validate:"min=0,max=20"`
+	LastName   string  `json:"last_name" validate:"min=0,max=20"`
+	Nickname   string  `json:"nickname" validate:"min=0,max=20"`
+	AvatarPath *string `json:"avatar_path,omitempty"`
+}
