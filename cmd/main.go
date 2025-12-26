@@ -13,6 +13,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/database"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -35,6 +36,13 @@ func main() {
 
 	zapLogger := logger.NewZapLogger()
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowCredentials: true,
+	}))
 
 	routes.RegisterPublicRoutes(app, db, zapLogger)
 	routes.RegisterPrivateRoutes(app, db, zapLogger)
