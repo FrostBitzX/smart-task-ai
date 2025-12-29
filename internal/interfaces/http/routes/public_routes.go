@@ -23,5 +23,5 @@ func RegisterPublicRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 
 	api.Post("/signup", accountHandler.CreateAccount)
 	api.Post("/login", accountHandler.Login)
-	api.Get("/account", accountHandler.ListAccounts)
+	api.Get("/accounts", accountHandler.ListAccounts)
 }

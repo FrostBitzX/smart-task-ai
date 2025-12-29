@@ -5,9 +5,11 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/middlewares"
 
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
+	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
 	profileDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
+	projectDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/service"
 	repo "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/persistence"
-	profileHandler "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/rest"
+	handler "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/rest"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -22,10 +24,19 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	createProfileUC := profileUC.NewCreateProfileUseCase(profileService, log)
 	getProfileUC := profileUC.NewGetProfileUseCase(profileService, log)
 	updateProfileUC := profileUC.NewUpdateProfileUseCase(profileService, log)
-	profileHandlerInstance := profileHandler.NewProfileHandler(createProfileUC, getProfileUC, updateProfileUC, log)
+	profileHandlerInstance := handler.NewProfileHandler(createProfileUC, getProfileUC, updateProfileUC, log)
 
 	// Profile routes
-	api.Post("/profile", profileHandlerInstance.CreateProfile)
-	api.Get("/profile", profileHandlerInstance.GetProfile)
-	api.Patch("/profile", profileHandlerInstance.UpdateProfile)
+	api.Post("/profiles", profileHandlerInstance.CreateProfile)
+	api.Get("/profiles", profileHandlerInstance.GetProfile)
+	api.Patch("/profiles", profileHandlerInstance.UpdateProfile)
+
+	// Project setup
+	projectRepository := repo.NewProjectRepository(db)
+	projectService := projectDomain.NewProjectService(projectRepository)
+	createProjectUC := projectUC.NewCreateProjectUseCase(projectService, log)
+	projectHandlerInstance := handler.NewProjectHandler(createProjectUC, log)
+
+	// Project routes
+	api.Post("/projects", projectHandlerInstance.CreateProject)
 }
