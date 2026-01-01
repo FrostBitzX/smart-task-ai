@@ -12,6 +12,8 @@ tags:
     description: Operations related to account management
   - name: profile
     description: Operations related to profile management
+  - name: project
+    description: Operations related to project management
 
 # All paths are referenced from external files
 paths:
@@ -28,3 +30,7 @@ paths:
   # Profile endpoints
   /api/profiles:
     $ref: "./resources/profile/paths/collection.yml#/paths/~1api~1profiles"
+
+  # Project endpoints
+  /api/projects:
+    $ref: "./resources/project/paths/collection.yml#/paths/~1api~1projects"
