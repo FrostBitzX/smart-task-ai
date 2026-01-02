@@ -1,20 +1,26 @@
 paths:
-  /api/accounts/{accountId}:
-    get:
-      operationId: getAccountById
-      summary: Get account by ID
-      description: Get account by ID
+  /api/{projectId}/tasks:
+    post:
+      operationId: createTask
+      summary: Create task
+      description: Create task
       tags:
-        - account
+        - task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/create-task-request.yml"
       parameters:
-        - name: accountId
+        - name: projectId
           in: path
           required: true
           schema:
             type: string
       responses:
         "200":
-          description: Account retrieved successfully
+          description: Task created successfully
           content:
             application/json:
               schema:
@@ -23,7 +29,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: "../schemas/account.yml"
+                        $ref: "../schemas/create-task-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
         "404":
