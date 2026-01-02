@@ -14,6 +14,8 @@ tags:
     description: Operations related to profile management
   - name: project
     description: Operations related to project management
+  - name: task
+    description: Operations related to task management
 
 # All paths are referenced from external files
 paths:
@@ -27,6 +29,9 @@ paths:
   /api/accounts:
     $ref: "./resources/account/paths/collection.yml#/paths/~1api~1accounts"
 
+  /api/accounts/{accountId}:
+    $ref: "./resources/account/paths/item.yml#/paths/~1api~1accounts~1{accountId}"
+
   # Profile endpoints
   /api/profiles:
     $ref: "./resources/profile/paths/collection.yml#/paths/~1api~1profiles"
@@ -34,3 +39,7 @@ paths:
   # Project endpoints
   /api/projects:
     $ref: "./resources/project/paths/collection.yml#/paths/~1api~1projects"
+
+  # Task endpoints
+  /api/{projectId}/tasks:
+    $ref: "./resources/task/paths/items.yml#/paths/~1api~1{projectId}~1tasks"

@@ -6,8 +6,10 @@ import (
 
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
 	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
+	taskUC "github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
 	profileDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
 	projectDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/service"
+	taskDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
 	repo "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/persistence"
 	handler "github.com/FrostBitzX/smart-task-ai/internal/infrastructure/rest"
 
@@ -39,4 +41,13 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 
 	// Project routes
 	api.Post("/projects", projectHandlerInstance.CreateProject)
+
+	// Task setup
+	taskRepository := repo.NewTaskRepository(db)
+	taskService := taskDomain.NewTaskService(taskRepository)
+	createTaskUC := taskUC.NewCreateTaskUseCase(taskService, log)
+	taskHandlerInstance := handler.NewTaskHandler(createTaskUC, log)
+
+	// Task routes
+	api.Post("/:projectID/tasks", taskHandlerInstance.CreateTask)
 }

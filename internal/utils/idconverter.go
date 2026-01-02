@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lithammer/shortuuid/v4"
@@ -22,4 +23,17 @@ func ParseShortUUID(shortID string, prefix string) (uuid.UUID, error) {
 
 	actualShortID := shortID[prefixLen:]
 	return shortuuid.DefaultEncoder.Decode(actualShortID)
+}
+
+// HasIDPrefix checks if the ID starts with the given prefix
+func HasIDPrefix(id string, prefix string) bool {
+	return strings.HasPrefix(id, prefix+"_")
+}
+
+// ParseID parses an ID that could be either a short UUID with prefix or a standard UUID
+func ParseID(id string, prefix string) (uuid.UUID, error) {
+	if HasIDPrefix(id, prefix) {
+		return ParseShortUUID(id, prefix)
+	}
+	return uuid.Parse(id)
 }
