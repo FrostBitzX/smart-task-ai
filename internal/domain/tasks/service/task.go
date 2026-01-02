@@ -25,6 +25,15 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
+	if req.StartDateTime != nil && req.EndDateTime != nil {
+		if *req.StartDateTime == *req.EndDateTime {
+			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
+		}
+		if *req.EndDateTime < *req.StartDateTime {
+			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
+		}
+	}
+
 	// create domain entity
 	now := time.Now()
 	task := &entity.Task{
