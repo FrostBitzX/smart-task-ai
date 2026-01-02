@@ -12,17 +12,20 @@ import (
 )
 
 type TaskHandler struct {
-	CreateTaskUC *usecase.CreateTaskUseCase
-	logger       logger.Logger
+	CreateTaskUC  *usecase.CreateTaskUseCase
+	GetTaskByIDUC *usecase.GetTaskByIDUseCase
+	logger        logger.Logger
 }
 
 func NewTaskHandler(
 	create *usecase.CreateTaskUseCase,
+	getByID *usecase.GetTaskByIDUseCase,
 	l logger.Logger,
 ) *TaskHandler {
 	return &TaskHandler{
-		CreateTaskUC: create,
-		logger:       l,
+		CreateTaskUC:  create,
+		GetTaskByIDUC: getByID,
+		logger:        l,
 	}
 }
 
@@ -47,4 +50,18 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Task created successfully")
+}
+
+func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
+	taskID := c.Params("taskId")
+	if taskID == "" {
+		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+	}
+
+	data, err := h.GetTaskByIDUC.Execute(c.Context(), taskID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Task retrieved successfully")
 }

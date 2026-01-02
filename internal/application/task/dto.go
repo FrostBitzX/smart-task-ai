@@ -1,5 +1,7 @@
 package task
 
+import "time"
+
 type CreateTaskRequest struct {
 	Name           string  `json:"name" validate:"required"`
 	Description    *string `json:"description"`
@@ -22,4 +24,19 @@ type CreateTaskResponse struct {
 	Location       *string `json:"location,omitempty"`
 	RecurringDays  *int    `json:"recurring_days,omitempty"`
 	RecurringUntil *string `json:"recurring_until,omitempty"`
+}
+
+type GetTaskByIDResponse struct {
+	ID             string    `json:"id"`
+	Status         string    `json:"status"`
+	Name           string    `json:"name"`
+	Description    *string   `json:"description,omitempty"`
+	Priority       string    `json:"priority"`
+	StartDateTime  *string   `json:"start_datetime,omitempty"`
+	EndDateTime    *string   `json:"end_datetime,omitempty"`
+	Location       *string   `json:"location,omitempty"`
+	RecurringDays  *int      `json:"recurring_days,omitempty"`
+	RecurringUntil *string   `json:"recurring_until,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }

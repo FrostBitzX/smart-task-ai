@@ -43,3 +43,6 @@ paths:
   # Task endpoints
   /api/{projectId}/tasks:
     $ref: "./resources/task/paths/items.yml#/paths/~1api~1{projectId}~1tasks"
+
+  /api/task/{taskId}:
+    $ref: "./resources/task/paths/item.yml#/paths/~1api~1task~1{taskId}"

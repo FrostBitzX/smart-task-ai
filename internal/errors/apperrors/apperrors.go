@@ -34,6 +34,15 @@ func NewConflictError(message, code string, details interface{}) *AppError {
 	}
 }
 
+func NewNotFoundError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusNotFound,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
 // NewInternalServerError creates an AppError representing a 500 Internal Server Error.
 func NewInternalServerError(message, code string, details interface{}) *AppError {
 	return &AppError{

@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
@@ -71,4 +73,16 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	}
 
 	return task, nil
+}
+
+func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error) {
+	tsk, err := s.repo.GetTaskByID(ctx, taskID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
+		}
+		return nil, apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
+	}
+
+	return tsk, nil
 }

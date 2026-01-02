@@ -1,0 +1,33 @@
+paths:
+  /api/task/{taskId}:
+    get:
+      operationId: getTaskById
+      summary: Get task by ID
+      description: Get task by ID
+      tags:
+        - task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "tsk_QsWNVMPBtXjDLiNfpMaWWw"
+      responses:
+        "200":
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/get-task-response.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
