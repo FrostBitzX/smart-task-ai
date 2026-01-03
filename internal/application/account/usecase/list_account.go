@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
+	"github.com/FrostBitzX/smart-task-ai/internal/application/common"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
@@ -66,7 +67,7 @@ func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAcco
 	// Build response
 	response := &account.ListAccountsResponse{
 		Items: accountDTOs,
-		Pagination: account.PaginationDTO{
+		Pagination: common.Pagination{
 			Total:   total,
 			Limit:   limit,
 			Offset:  offset,

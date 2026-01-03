@@ -1,5 +1,7 @@
 package account
 
+import "github.com/FrostBitzX/smart-task-ai/internal/application/common"
+
 type CreateAccountRequest struct {
 	Username        string `json:"username" validate:"required,min=3,max=20"`
 	Email           string `json:"email" validate:"required,email"`
@@ -23,16 +25,9 @@ type AccountDTO struct {
 	Status   string `json:"status"`
 }
 
-type PaginationDTO struct {
-	Total   int  `json:"total"`
-	Limit   int  `json:"limit"`
-	Offset  int  `json:"offset"`
-	HasMore bool `json:"has_more"`
-}
-
 type ListAccountsResponse struct {
-	Items      []AccountDTO  `json:"items"`
-	Pagination PaginationDTO `json:"pagination"`
+	Items      []AccountDTO      `json:"items"`
+	Pagination common.Pagination `json:"pagination"`
 }
 
 type LoginRequest struct {

@@ -32,3 +32,15 @@ func (r *taskRepository) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*en
 	}
 	return &task, nil
 }
+
+func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
+	var tasks []*entity.Task
+	err := r.db.WithContext(ctx).
+		Select("id, node_id, project_id, name, description, priority, start_datetime, end_datetime, location, recurring_days, recurring_until, status, created_at, updated_at").
+		Where("project_id = ?", projectID).
+		Find(&tasks).Error
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}

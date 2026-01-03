@@ -86,3 +86,12 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entit
 
 	return tsk, nil
 }
+
+func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
+	tasks, err := s.repo.ListTasksByProject(ctx, projectID)
+	if err != nil {
+		return nil, apperrors.NewInternalServerError("failed to list tasks", "LIST_TASKS_ERROR", err)
+	}
+
+	return tasks, nil
+}

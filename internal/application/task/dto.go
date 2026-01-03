@@ -1,6 +1,10 @@
 package task
 
-import "time"
+import (
+	"time"
+
+	"github.com/FrostBitzX/smart-task-ai/internal/application/common"
+)
 
 type CreateTaskRequest struct {
 	Name           string  `json:"name" validate:"required"`
@@ -39,4 +43,9 @@ type GetTaskByIDResponse struct {
 	RecurringUntil *string   `json:"recurring_until,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type ListTasksByProjectResponse struct {
+	Items      []GetTaskByIDResponse `json:"items"`
+	Pagination common.Pagination     `json:"pagination"`
 }

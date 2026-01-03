@@ -12,20 +12,23 @@ import (
 )
 
 type TaskHandler struct {
-	CreateTaskUC  *usecase.CreateTaskUseCase
-	GetTaskByIDUC *usecase.GetTaskByIDUseCase
-	logger        logger.Logger
+	CreateTaskUC         *usecase.CreateTaskUseCase
+	GetTaskByIDUC        *usecase.GetTaskByIDUseCase
+	ListTasksByProjectUC *usecase.ListTasksByProjectUseCase
+	logger               logger.Logger
 }
 
 func NewTaskHandler(
 	create *usecase.CreateTaskUseCase,
 	getByID *usecase.GetTaskByIDUseCase,
+	listByProject *usecase.ListTasksByProjectUseCase,
 	l logger.Logger,
 ) *TaskHandler {
 	return &TaskHandler{
-		CreateTaskUC:  create,
-		GetTaskByIDUC: getByID,
-		logger:        l,
+		CreateTaskUC:         create,
+		GetTaskByIDUC:        getByID,
+		ListTasksByProjectUC: listByProject,
+		logger:               l,
 	}
 }
 
@@ -64,4 +67,18 @@ func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Task retrieved successfully")
+}
+
+func (h *TaskHandler) ListTasksByProject(c *fiber.Ctx) error {
+	projectID := c.Params("projectID")
+	if projectID == "" {
+		return responses.Error(c, apperrors.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
+	}
+
+	data, err := h.ListTasksByProjectUC.Execute(c.Context(), projectID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Tasks retrieved successfully")
 }
