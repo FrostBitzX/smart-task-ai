@@ -16,6 +16,7 @@ type TaskHandler struct {
 	GetTaskByIDUC        *usecase.GetTaskByIDUseCase
 	ListTasksByProjectUC *usecase.ListTasksByProjectUseCase
 	UpdateTaskUC         *usecase.UpdateTaskUseCase
+	DeleteTaskUC         *usecase.DeleteTaskUseCase
 	logger               logger.Logger
 }
 
@@ -24,6 +25,7 @@ func NewTaskHandler(
 	getByID *usecase.GetTaskByIDUseCase,
 	listByProject *usecase.ListTasksByProjectUseCase,
 	update *usecase.UpdateTaskUseCase,
+	delete *usecase.DeleteTaskUseCase,
 	l logger.Logger,
 ) *TaskHandler {
 	return &TaskHandler{
@@ -31,6 +33,7 @@ func NewTaskHandler(
 		GetTaskByIDUC:        getByID,
 		ListTasksByProjectUC: listByProject,
 		UpdateTaskUC:         update,
+		DeleteTaskUC:         delete,
 		logger:               l,
 	}
 }
@@ -106,4 +109,18 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Task updated successfully")
+}
+
+func (h *TaskHandler) DeleteTask(c *fiber.Ctx) error {
+	taskID := c.Params("taskId")
+	if taskID == "" {
+		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+	}
+
+	deletedID, err := h.DeleteTaskUC.Execute(c.Context(), taskID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, fiber.Map{"task_id": deletedID}, "Task deleted successfully")
 }

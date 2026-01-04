@@ -139,3 +139,20 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 
 	return tsk, nil
 }
+
+func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
+	_, err := s.repo.GetTaskByID(ctx, taskID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
+		}
+		return apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
+	}
+
+	err = s.repo.DeleteTask(ctx, taskID)
+	if err != nil {
+		return apperrors.NewInternalServerError("failed to delete task", "DELETE_TASK_ERROR", err)
+	}
+
+	return nil
+}

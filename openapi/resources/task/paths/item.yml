@@ -70,6 +70,39 @@ paths:
           $ref: "../../../shared/responses/not-found.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
+    delete:
+      operationId: deleteTask
+      summary: Delete task
+      description: Delete task by ID
+      tags:
+        - task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "tsk_QsWNVMPBtXjDLiNfpMaWWw"
+      responses:
+        "200":
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      message:
+                        example: "Task deleted successfully"
+                      data:
+                        $ref: "../schemas/delete-task-response.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
 
   /api/{projectId}/tasks:
     post:

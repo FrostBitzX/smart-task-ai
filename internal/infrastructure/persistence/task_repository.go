@@ -48,3 +48,7 @@ func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.
 func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task) error {
 	return r.db.WithContext(ctx).Save(task).Error
 }
+
+func (r *taskRepository) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
+	return r.db.WithContext(ctx).Where("id = ?", taskID).Delete(&entity.Task{}).Error
+}
