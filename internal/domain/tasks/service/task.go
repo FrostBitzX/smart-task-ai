@@ -28,10 +28,19 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	}
 
 	if req.StartDateTime != nil && req.EndDateTime != nil {
-		if *req.StartDateTime == *req.EndDateTime {
+		start, err := time.Parse(time.RFC3339, *req.StartDateTime)
+		if err != nil {
+			return nil, apperrors.NewBadRequestError("invalid start_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+		end, err := time.Parse(time.RFC3339, *req.EndDateTime)
+		if err != nil {
+			return nil, apperrors.NewBadRequestError("invalid end_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+
+		if start.Equal(end) {
 			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
 		}
-		if *req.EndDateTime < *req.StartDateTime {
+		if end.Before(start) {
 			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
 		}
 	}
@@ -113,10 +122,19 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 
 	// Additional validation same as CreateTask
 	if req.StartDateTime != nil && req.EndDateTime != nil {
-		if *req.StartDateTime == *req.EndDateTime {
+		start, err := time.Parse(time.RFC3339, *req.StartDateTime)
+		if err != nil {
+			return nil, apperrors.NewBadRequestError("invalid start_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+		end, err := time.Parse(time.RFC3339, *req.EndDateTime)
+		if err != nil {
+			return nil, apperrors.NewBadRequestError("invalid end_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+
+		if start.Equal(end) {
 			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
 		}
-		if *req.EndDateTime < *req.StartDateTime {
+		if end.Before(start) {
 			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
 		}
 	}

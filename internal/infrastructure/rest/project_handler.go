@@ -3,10 +3,10 @@ package rest
 import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project"
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
+	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/requests"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/responses"
-	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -31,20 +31,20 @@ func (h *ProjectHandler) CreateProject(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperror.ErrInvalidData)
+		return responses.Error(c, apperrors.ErrInvalidData)
 	}
 
 	// Get AccountID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
-		return responses.Error(c, apperror.ErrUnauthorized)
+		return responses.Error(c, apperrors.ErrUnauthorized)
 	}
 
 	accountID, ok := jwtClaims["AccountId"].(string)
 	if !ok || accountID == "" {
 		h.logger.Error("Missing AccountId in JWT claims", nil)
-		return responses.Error(c, apperror.ErrUnauthorized)
+		return responses.Error(c, apperrors.ErrUnauthorized)
 	}
 
 	// Set AccountID from JWT

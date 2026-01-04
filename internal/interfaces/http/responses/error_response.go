@@ -2,7 +2,6 @@ package responses
 
 import (
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
-	appError "github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,22 +29,17 @@ type ErrorDetail struct {
 
 func Error(c *fiber.Ctx, err error) error {
 	var status int
-	code := "INTERNAL_SERVER_ERROR"
-	message := "Internal server error"
+	var code string
+	var message string
 
-	// Check if it's from internal/errors/apperrors package first
 	if appErr, ok := apperrors.IsAppError(err); ok {
 		status = appErr.Status
 		code = appErr.Code
 		message = appErr.Message
-	} else if appErr, ok := err.(*appError.AppError); ok && appErr.HTTPStatus != 0 {
-		// Check if it's from pkg/apperror package
-		status = appErr.HTTPStatus
-		code = appErr.Code
-		message = appErr.Message
 	} else {
-		// Fallback to status code mapping
-		status = appError.StatusCode(err)
+		status = apperrors.StatusCode(err)
+		code = "INTERNAL_SERVER_ERROR"
+		message = err.Error()
 	}
 
 	errorResponse := ErrorResponse{

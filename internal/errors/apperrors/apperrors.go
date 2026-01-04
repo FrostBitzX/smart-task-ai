@@ -1,20 +1,33 @@
 package apperrors
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm/logger"
+)
 
 // AppError represents a domain/application-level error that can be mapped to HTTP responses.
 type AppError struct {
-	Status  int         // HTTP status code
-	Code    string      // Machine-readable error code (e.g. "INTERNAL_SERVER_ERROR")
-	Message string      // Human-readable message
-	Details interface{} // Optional additional details (can be string, map, struct, etc.)
+	Status   int         // HTTP status code
+	Code     string      // Machine-readable error code (e.g. "INTERNAL_SERVER_ERROR")
+	Message  string      // Human-readable message
+	Details  interface{} // Optional additional details for response
+	RawError error       // Underlying error for logging
 }
 
 func (e *AppError) Error() string {
+	if e.RawError != nil {
+		return e.Message + ": " + e.RawError.Error()
+	}
 	return e.Message
 }
 
-// NewBadRequestError creates an AppError representing a 400 Bad Request.
+// ------------------------
+// Factory methods
+// ------------------------
+
 func NewBadRequestError(message, code string, details interface{}) *AppError {
 	return &AppError{
 		Status:  http.StatusBadRequest,
@@ -24,10 +37,18 @@ func NewBadRequestError(message, code string, details interface{}) *AppError {
 	}
 }
 
-// NewConflictError creates an AppError representing a 409 Conflict.
-func NewConflictError(message, code string, details interface{}) *AppError {
+func NewUnauthorizedError(message, code string, details interface{}) *AppError {
 	return &AppError{
-		Status:  http.StatusConflict,
+		Status:  http.StatusUnauthorized,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewForbiddenError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
 		Code:    code,
 		Message: message,
 		Details: details,
@@ -43,7 +64,15 @@ func NewNotFoundError(message, code string, details interface{}) *AppError {
 	}
 }
 
-// NewInternalServerError creates an AppError representing a 500 Internal Server Error.
+func NewConflictError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusConflict,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
 func NewInternalServerError(message, code string, details interface{}) *AppError {
 	return &AppError{
 		Status:  http.StatusInternalServerError,
@@ -53,17 +82,49 @@ func NewInternalServerError(message, code string, details interface{}) *AppError
 	}
 }
 
+// ------------------------
+// Common Errors (Migrated from pkg/apperror)
+// ------------------------
+
+var (
+	ErrInternalServer = errors.New("internal server error")
+	ErrUnauthorized   = errors.New("unauthorized")
+	ErrForbidden      = errors.New("forbidden")
+	ErrInvalidData    = errors.New("invalid data")
+	ErrRecordNotFound = logger.ErrRecordNotFound
+)
+
+// StatusCode maps generic errors to HTTP status codes
+func StatusCode(err error) int {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Status
+	}
+
+	switch {
+	case errors.Is(err, ErrUnauthorized):
+		return fiber.StatusUnauthorized
+	case errors.Is(err, ErrForbidden):
+		return fiber.StatusForbidden
+	case errors.Is(err, ErrRecordNotFound):
+		return fiber.StatusNotFound
+	case errors.Is(err, ErrInvalidData):
+		return fiber.StatusBadRequest
+	case errors.Is(err, ErrInternalServer):
+		return fiber.StatusInternalServerError
+	default:
+		return fiber.StatusInternalServerError
+	}
+}
+
 // IsAppError tries to cast a generic error into *AppError.
-// It returns the casted *AppError and a boolean indicating whether the cast succeeded.
 func IsAppError(err error) (*AppError, bool) {
 	if err == nil {
 		return nil, false
 	}
-
-	appErr, ok := err.(*AppError)
-	if ok {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
 		return appErr, true
 	}
-
 	return nil, false
 }

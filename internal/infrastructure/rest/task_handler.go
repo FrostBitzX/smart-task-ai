@@ -7,7 +7,6 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/requests"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/responses"
-	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -44,7 +43,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperror.ErrInvalidData)
+		return responses.Error(c, apperrors.ErrInvalidData)
 	}
 
 	// Parse project ID from URL
@@ -95,7 +94,7 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperror.ErrInvalidData)
+		return responses.Error(c, apperrors.ErrInvalidData)
 	}
 
 	taskID := c.Params("taskId")
