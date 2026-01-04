@@ -15,6 +15,7 @@ type TaskHandler struct {
 	CreateTaskUC         *usecase.CreateTaskUseCase
 	GetTaskByIDUC        *usecase.GetTaskByIDUseCase
 	ListTasksByProjectUC *usecase.ListTasksByProjectUseCase
+	UpdateTaskUC         *usecase.UpdateTaskUseCase
 	logger               logger.Logger
 }
 
@@ -22,12 +23,14 @@ func NewTaskHandler(
 	create *usecase.CreateTaskUseCase,
 	getByID *usecase.GetTaskByIDUseCase,
 	listByProject *usecase.ListTasksByProjectUseCase,
+	update *usecase.UpdateTaskUseCase,
 	l logger.Logger,
 ) *TaskHandler {
 	return &TaskHandler{
 		CreateTaskUC:         create,
 		GetTaskByIDUC:        getByID,
 		ListTasksByProjectUC: listByProject,
+		UpdateTaskUC:         update,
 		logger:               l,
 	}
 }
@@ -42,7 +45,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	}
 
 	// Parse project ID from URL
-	projectID := c.Params("projectID")
+	projectID := c.Params("projectId")
 	if projectID == "" {
 		return responses.Error(c, apperrors.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
@@ -70,7 +73,7 @@ func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 }
 
 func (h *TaskHandler) ListTasksByProject(c *fiber.Ctx) error {
-	projectID := c.Params("projectID")
+	projectID := c.Params("projectId")
 	if projectID == "" {
 		return responses.Error(c, apperrors.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
@@ -81,4 +84,26 @@ func (h *TaskHandler) ListTasksByProject(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Tasks retrieved successfully")
+}
+
+func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
+	req, err := requests.ParseAndValidate[task.UpdateTaskRequest](c)
+	if err != nil {
+		h.logger.Warn("Invalid request data", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return responses.Error(c, apperror.ErrInvalidData)
+	}
+
+	taskID := c.Params("taskId")
+	if taskID == "" {
+		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+	}
+
+	data, err := h.UpdateTaskUC.Execute(c.Context(), taskID, req)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Task updated successfully")
 }

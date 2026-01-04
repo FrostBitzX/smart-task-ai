@@ -44,3 +44,7 @@ func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.
 	}
 	return tasks, nil
 }
+
+func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task) error {
+	return r.db.WithContext(ctx).Save(task).Error
+}

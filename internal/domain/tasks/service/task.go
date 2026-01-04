@@ -95,3 +95,47 @@ func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUI
 
 	return tasks, nil
 }
+
+func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *task.UpdateTaskRequest) (*entity.Task, error) {
+	// Get task by ID for update
+	tsk, err := s.repo.GetTaskByID(ctx, taskID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
+		}
+		return nil, apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
+	}
+
+	// Rule: If status != todo, cannot change start_datetime
+	if tsk.Status != "todo" && req.StartDateTime != nil {
+		return nil, apperrors.NewBadRequestError("cannot update start_datetime when status is not todo", "INVALID_REQUEST", nil)
+	}
+
+	// Additional validation same as CreateTask
+	if req.StartDateTime != nil && req.EndDateTime != nil {
+		if *req.StartDateTime == *req.EndDateTime {
+			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
+		}
+		if *req.EndDateTime < *req.StartDateTime {
+			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
+		}
+	}
+
+	// Update fields
+	tsk.Name = req.Name
+	tsk.Description = req.Description
+	tsk.Priority = req.Priority
+	tsk.Location = req.Location
+	tsk.RecurringDays = req.RecurringDays
+	tsk.RecurringUntil = req.RecurringUntil
+	tsk.StartDateTime = req.StartDateTime
+	tsk.EndDateTime = req.EndDateTime
+	tsk.UpdatedAt = time.Now()
+
+	err = s.repo.UpdateTask(ctx, tsk)
+	if err != nil {
+		return nil, apperrors.NewInternalServerError("failed to update task", "UPDATE_TASK_ERROR", err)
+	}
+
+	return tsk, nil
+}

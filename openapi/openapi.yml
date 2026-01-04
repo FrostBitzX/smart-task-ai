@@ -44,5 +44,5 @@ paths:
   /api/{projectId}/tasks:
     $ref: "./resources/task/paths/item.yml#/paths/~1api~1{projectId}~1tasks"
 
-  /api/task/{taskId}:
-    $ref: "./resources/task/paths/item.yml#/paths/~1api~1task~1{taskId}"
+  /api/tasks/{taskId}:
+    $ref: "./resources/task/paths/item.yml#/paths/~1api~1tasks~1{taskId}"

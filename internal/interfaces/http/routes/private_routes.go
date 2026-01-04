@@ -48,10 +48,12 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	createTaskUC := taskUC.NewCreateTaskUseCase(taskService, log)
 	getTaskByIDUC := taskUC.NewGetTaskByIDUseCase(taskService, log)
 	listTasksByProjectUC := taskUC.NewListTasksByProjectUseCase(taskService, log)
-	taskHandlerInstance := handler.NewTaskHandler(createTaskUC, getTaskByIDUC, listTasksByProjectUC, log)
+	updateTaskUC := taskUC.NewUpdateTaskUseCase(taskService, log)
+	taskHandlerInstance := handler.NewTaskHandler(createTaskUC, getTaskByIDUC, listTasksByProjectUC, updateTaskUC, log)
 
 	// Task routes
 	api.Post("/:projectId/tasks", taskHandlerInstance.CreateTask)
 	api.Get("/:projectId/tasks", taskHandlerInstance.ListTasksByProject)
 	api.Get("/tasks/:taskId", taskHandlerInstance.GetTaskByID)
+	api.Patch("/tasks/:taskId", taskHandlerInstance.UpdateTask)
 }

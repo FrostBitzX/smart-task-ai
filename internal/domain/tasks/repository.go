@@ -11,4 +11,5 @@ type TaskRepository interface {
 	CreateTask(ctx context.Context, task *entity.Task) error
 	GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error)
 	ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error)
+	UpdateTask(ctx context.Context, task *entity.Task) error
 }
