@@ -1,3 +1,4 @@
+//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=../../mocks/account_repository.go -package=mocks
 package accounts
 
 import (

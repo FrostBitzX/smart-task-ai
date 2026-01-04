@@ -1,3 +1,4 @@
+//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=../../mocks/project_repository.go -package=mocks
 package projects
 
 import (

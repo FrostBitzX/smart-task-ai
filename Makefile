@@ -1,10 +1,13 @@
-.PHONY: tidy mod codegen codegen-tag lint run
+.PHONY: tidy mod codegen codegen-tag lint run mockgen
 
 mod:
 	go mod tidy
 
 run:
 	go run cmd/main.go
+
+mockgen:
+	go generate ./internal/domain/...
 
 lint:
 	golangci-lint run ./...
