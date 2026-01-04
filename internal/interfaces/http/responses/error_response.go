@@ -23,19 +23,22 @@ type SuccessResponse struct {
 }
 
 type ErrorDetail struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Details interface{} `json:"details,omitempty"`
 }
 
 func Error(c *fiber.Ctx, err error) error {
 	var status int
 	var code string
 	var message string
+	var details interface{}
 
 	if appErr, ok := apperrors.IsAppError(err); ok {
 		status = appErr.Status
 		code = appErr.Code
 		message = appErr.Message
+		details = appErr.Details
 	} else {
 		status = apperrors.StatusCode(err)
 		code = "INTERNAL_SERVER_ERROR"
@@ -49,6 +52,7 @@ func Error(c *fiber.Ctx, err error) error {
 		Error: ErrorDetail{
 			Code:    status,
 			Message: code,
+			Details: details,
 		},
 	}
 

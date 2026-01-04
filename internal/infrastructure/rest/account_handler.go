@@ -3,7 +3,6 @@ package rest
 import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account/usecase"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/requests"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/responses"
@@ -38,7 +37,7 @@ func (h *AccountHandler) CreateAccount(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	data, err := h.CreateAccountUC.Execute(c.Context(), req)
@@ -55,7 +54,7 @@ func (h *AccountHandler) ListAccounts(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid query parameters", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	data, err := h.ListAccountUC.Execute(c.Context(), req)
@@ -72,7 +71,7 @@ func (h *AccountHandler) Login(c *fiber.Ctx) error {
 		h.logger.Warn("Failed to validate request", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	data, err := h.LoginUC.Execute(c.Context(), req)

@@ -43,7 +43,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	// Parse project ID from URL
@@ -94,7 +94,7 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	taskID := c.Params("taskId")

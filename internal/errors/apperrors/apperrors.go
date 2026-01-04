@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm/logger"
+	"gorm.io/gorm"
 )
 
 // AppError represents a domain/application-level error that can be mapped to HTTP responses.
@@ -83,7 +83,7 @@ func NewInternalServerError(message, code string, details interface{}) *AppError
 }
 
 // ------------------------
-// Common Errors (Migrated from pkg/apperror)
+// Common Errors
 // ------------------------
 
 var (
@@ -91,7 +91,7 @@ var (
 	ErrUnauthorized   = errors.New("unauthorized")
 	ErrForbidden      = errors.New("forbidden")
 	ErrInvalidData    = errors.New("invalid data")
-	ErrRecordNotFound = logger.ErrRecordNotFound
+	ErrRecordNotFound = gorm.ErrRecordNotFound
 )
 
 // StatusCode maps generic errors to HTTP status codes

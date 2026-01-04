@@ -1,8 +1,7 @@
 package requests
 
 import (
-	"net/http"
-
+	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,19 +12,11 @@ func ParseAndValidate[T any](c *fiber.Ctx) (*T, error) {
 	var body T
 
 	if err := c.BodyParser(&body); err != nil {
-		return nil, c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Operation failed",
-			"data":    nil,
-			"error": fiber.Map{
-				"code":    400,
-				"message": "Invalid JSON format",
-			},
-		})
+		return nil, apperrors.NewBadRequestError("Invalid JSON format", "INVALID_JSON", err)
 	}
 
 	if err := validate.Struct(&body); err != nil {
-		return nil, validationErrorResponse(c, err)
+		return nil, validationError(err)
 	}
 
 	return &body, nil
@@ -35,19 +26,11 @@ func ParseAndValidateQuery[T any](c *fiber.Ctx) (*T, error) {
 	var q T
 
 	if err := c.QueryParser(&q); err != nil {
-		return nil, c.Status(http.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"message": "Operation failed",
-			"data":    nil,
-			"error": fiber.Map{
-				"code":    400,
-				"message": "Invalid query parameters",
-			},
-		})
+		return nil, apperrors.NewBadRequestError("Invalid query parameters", "INVALID_QUERY", err)
 	}
 
 	if err := validate.Struct(&q); err != nil {
-		return nil, validationErrorResponse(c, err)
+		return nil, validationError(err)
 	}
 
 	return &q, nil
@@ -84,7 +67,7 @@ func ParseAndValidateDetailed[T any](c *fiber.Ctx) (*T, map[string]string, error
 	return &body, nil, nil
 }
 
-func validationErrorResponse(c *fiber.Ctx, err error) error {
+func validationError(err error) error {
 	msg := "Validation failed"
 
 	if errs, ok := err.(validator.ValidationErrors); ok {
@@ -103,13 +86,5 @@ func validationErrorResponse(c *fiber.Ctx, err error) error {
 		}
 	}
 
-	return c.Status(http.StatusBadRequest).JSON(fiber.Map{
-		"success": false,
-		"message": "Operation failed",
-		"data":    nil,
-		"error": fiber.Map{
-			"code":    400,
-			"message": msg,
-		},
-	})
+	return apperrors.NewBadRequestError(msg, "VALIDATION_FAILED", err)
 }

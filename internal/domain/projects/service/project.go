@@ -26,10 +26,15 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *project.CreateP
 	}
 
 	// create domain entity
+	accountID, err := uuid.Parse(req.AccountID)
+	if err != nil {
+		return nil, apperrors.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
+	}
+
 	now := time.Now()
 	proj := &entity.Project{
 		ID:        uuid.New(),
-		AccountID: uuid.MustParse(req.AccountID),
+		AccountID: accountID,
 		Role:      "owner",
 		Name:      req.Name,
 		Config:    req.Config,
@@ -38,7 +43,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *project.CreateP
 	}
 
 	// persist account to database
-	err := s.repo.CreateProject(ctx, proj)
+	err = s.repo.CreateProject(ctx, proj)
 	if err != nil {
 		return nil, apperrors.NewInternalServerError("failed to create project", "CREATE_PROJECT_ERROR", err)
 	}

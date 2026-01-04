@@ -8,7 +8,6 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
@@ -27,22 +26,8 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	if req.StartDateTime != nil && req.EndDateTime != nil {
-		start, err := time.Parse(time.RFC3339, *req.StartDateTime)
-		if err != nil {
-			return nil, apperrors.NewBadRequestError("invalid start_datetime format", "INVALID_DATE_FORMAT", err)
-		}
-		end, err := time.Parse(time.RFC3339, *req.EndDateTime)
-		if err != nil {
-			return nil, apperrors.NewBadRequestError("invalid end_datetime format", "INVALID_DATE_FORMAT", err)
-		}
-
-		if start.Equal(end) {
-			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
-		}
-		if end.Before(start) {
-			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
-		}
+	if err := s.validateTimeRange(req.StartDateTime, req.EndDateTime); err != nil {
+		return nil, err
 	}
 
 	// create domain entity
@@ -87,7 +72,7 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error) {
 	tsk, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, apperrors.ErrRecordNotFound) {
 			return nil, apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
 		}
 		return nil, apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
@@ -109,7 +94,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	// Get task by ID for update
 	tsk, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, apperrors.ErrRecordNotFound) {
 			return nil, apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
 		}
 		return nil, apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
@@ -121,22 +106,8 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	}
 
 	// Additional validation same as CreateTask
-	if req.StartDateTime != nil && req.EndDateTime != nil {
-		start, err := time.Parse(time.RFC3339, *req.StartDateTime)
-		if err != nil {
-			return nil, apperrors.NewBadRequestError("invalid start_datetime format", "INVALID_DATE_FORMAT", err)
-		}
-		end, err := time.Parse(time.RFC3339, *req.EndDateTime)
-		if err != nil {
-			return nil, apperrors.NewBadRequestError("invalid end_datetime format", "INVALID_DATE_FORMAT", err)
-		}
-
-		if start.Equal(end) {
-			return nil, apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
-		}
-		if end.Before(start) {
-			return nil, apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
-		}
+	if err := s.validateTimeRange(req.StartDateTime, req.EndDateTime); err != nil {
+		return nil, err
 	}
 
 	// Update fields
@@ -161,7 +132,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
 	_, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, apperrors.ErrRecordNotFound) {
 			return apperrors.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
 		}
 		return apperrors.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
@@ -172,5 +143,26 @@ func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
 		return apperrors.NewInternalServerError("failed to delete task", "DELETE_TASK_ERROR", err)
 	}
 
+	return nil
+}
+
+func (s *TaskService) validateTimeRange(startStr, endStr *string) error {
+	if startStr != nil && endStr != nil {
+		start, err := time.Parse(time.RFC3339, *startStr)
+		if err != nil {
+			return apperrors.NewBadRequestError("invalid start_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+		end, err := time.Parse(time.RFC3339, *endStr)
+		if err != nil {
+			return apperrors.NewBadRequestError("invalid end_datetime format", "INVALID_DATE_FORMAT", err)
+		}
+
+		if start.Equal(end) {
+			return apperrors.NewBadRequestError("start_datetime and end_datetime cannot be the same", "INVALID_REQUEST", nil)
+		}
+		if end.Before(start) {
+			return apperrors.NewBadRequestError("end_datetime must be greater than start_datetime", "INVALID_REQUEST", nil)
+		}
+	}
 	return nil
 }

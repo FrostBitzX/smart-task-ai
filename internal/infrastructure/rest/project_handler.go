@@ -31,7 +31,7 @@ func (h *ProjectHandler) CreateProject(c *fiber.Ctx) error {
 		h.logger.Warn("Invalid request data", map[string]interface{}{
 			"error": err.Error(),
 		})
-		return responses.Error(c, apperrors.ErrInvalidData)
+		return responses.Error(c, err)
 	}
 
 	// Get AccountID from JWT claims
