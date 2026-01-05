@@ -2,35 +2,124 @@ package apperror
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm/logger"
+	"gorm.io/gorm"
 )
 
+// AppError represents a domain/application-level error that can be mapped to HTTP responses.
 type AppError struct {
-	Code       string `json:"code"`
-	Message    string `json:"message"`
-	HTTPStatus int    `json:"-"`
-	Err        error  `json:"-"`
+	Status   int         `json:"-"`                 // HTTP status code
+	Code     string      `json:"code"`              // Machine-readable error code (e.g. "INTERNAL_SERVER_ERROR")
+	Message  string      `json:"message"`           // Human-readable message
+	Details  interface{} `json:"details,omitempty"` // Optional additional details for response
+	RawError error       `json:"-"`                 // Underlying error for logging
 }
 
 func (e *AppError) Error() string {
+	if e.RawError != nil {
+		return e.Message + ": " + e.RawError.Error()
+	}
 	return e.Message
 }
 
+// Unwrap returns the underlying error for errors.Is/As support
+func (e *AppError) Unwrap() error {
+	return e.RawError
+}
+
+// ------------------------
+// Factory methods
+// ------------------------
+
 func NewAppError(code string, msg string, statusCode int, err error) *AppError {
 	return &AppError{
-		Code:       code,
-		Message:    msg,
-		HTTPStatus: statusCode,
-		Err:        err,
+		Status:   statusCode,
+		Code:     code,
+		Message:  msg,
+		RawError: err,
 	}
 }
 
+func NewBadRequestError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusBadRequest,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewUnauthorizedError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusUnauthorized,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewForbiddenError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewNotFoundError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusNotFound,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewConflictError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusConflict,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewInternalServerError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusInternalServerError,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewTimeoutError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusGatewayTimeout,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+func NewTooManyRequestsError(message, code string, details interface{}) *AppError {
+	return &AppError{
+		Status:  http.StatusTooManyRequests,
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+// ------------------------
+// Common Errors (Sentinel errors)
+// ------------------------
+
 var (
-	// ------------------------
 	// Generic errors
-	// ------------------------
 	ErrInternalServer = errors.New("internal server error") // 500
 	ErrUnknown        = errors.New("unknown error")         // 500
 	ErrTimeout        = errors.New("timeout")               // 504
@@ -38,10 +127,8 @@ var (
 	ErrForbidden      = errors.New("forbidden")             // 403
 	ErrNotImplemented = errors.New("not implemented")       // 501
 
-	// ------------------------
 	// GORM errors
-	// ------------------------
-	ErrRecordNotFound                = logger.ErrRecordNotFound                                          // 404
+	ErrRecordNotFound                = gorm.ErrRecordNotFound                                            // 404
 	ErrInvalidTransaction            = errors.New("invalid transaction")                                 // 400
 	ErrMissingWhereClause            = errors.New("WHERE conditions required")                           // 400
 	ErrUnsupportedRelation           = errors.New("unsupported relations")                               // 400
@@ -63,9 +150,7 @@ var (
 	ErrForeignKeyViolated            = errors.New("violates foreign key constraint")                     // 409
 	ErrCheckConstraintViolated       = errors.New("violates check constraint")                           // 409
 
-	// ------------------------
 	// Validation errors
-	// ------------------------
 	ErrInvalidData   = errors.New("invalid data")           // 400
 	ErrInvalidID     = errors.New("invalid id")             // 400
 	ErrRequiredField = errors.New("required field missing") // 400
@@ -73,17 +158,13 @@ var (
 	ErrOutOfRange    = errors.New("value out of range")     // 400
 	ErrUnprocessable = errors.New("unprocessable entity")   // 422
 
-	// ------------------------
 	// Business logic / domain-specific errors
-	// ------------------------
 	ErrAlreadyExists   = errors.New("already exists")   // 409
 	ErrNotAvailable    = errors.New("not available")    // 409
 	ErrLimitExceeded   = errors.New("limit exceeded")   // 429
 	ErrOperationDenied = errors.New("operation denied") // 403
 
-	// ------------------------
 	// Other errors
-	// ------------------------
 	ErrConflict         = errors.New("conflict")            // 409
 	ErrDependencyFail   = errors.New("dependency failure")  // 502
 	ErrTransactionAbort = errors.New("transaction aborted") // 500
@@ -91,6 +172,12 @@ var (
 
 // StatusCode maps errors to Fiber HTTP status codes
 func StatusCode(err error) int {
+	// First check if it's an AppError
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr.Status
+	}
+
 	switch {
 	// Generic
 	case errors.Is(err, ErrInternalServer), errors.Is(err, ErrUnknown), errors.Is(err, ErrTransactionAbort):
@@ -134,4 +221,16 @@ func StatusCode(err error) int {
 	default:
 		return fiber.StatusInternalServerError
 	}
+}
+
+// IsAppError tries to cast a generic error into *AppError.
+func IsAppError(err error) (*AppError, bool) {
+	if err == nil {
+		return nil, false
+	}
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return appErr, true
+	}
+	return nil, false
 }

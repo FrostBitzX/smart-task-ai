@@ -6,9 +6,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/profile"
 	accountEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type GetProfileUseCase struct {
@@ -25,7 +25,7 @@ func NewGetProfileUseCase(svc *service.ProfileService, l logger.Logger) *GetProf
 
 func (uc *GetProfileUseCase) Execute(ctx context.Context, req *profile.GetProfileByAccountIDRequest) (*profile.GetProfileByAccountIDResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	prof, err := uc.profileService.GetProfileByAccountID(ctx, req.AccountID)

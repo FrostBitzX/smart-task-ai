@@ -6,9 +6,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/account"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type CreateAccountUseCase struct {
@@ -25,7 +25,7 @@ func NewCreateAccountUseCase(svc *service.AccountService, l logger.Logger) *Crea
 
 func (uc *CreateAccountUseCase) Execute(ctx context.Context, req *account.CreateAccountRequest) (*account.CreateAccountResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	acc, err := uc.accountService.CreateAccount(ctx, req)

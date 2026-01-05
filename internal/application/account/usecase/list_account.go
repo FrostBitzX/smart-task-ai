@@ -7,9 +7,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/common"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type ListAccountUseCase struct {
@@ -26,7 +26,7 @@ func NewListAccountUseCase(svc *service.AccountService, l logger.Logger) *ListAc
 
 func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAccountsRequest) (*account.ListAccountsResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	// Set pagination defaults

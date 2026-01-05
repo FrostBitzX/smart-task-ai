@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project"
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -16,57 +19,180 @@ func TestProjectService_CreateProject(t *testing.T) {
 
 	mockRepo := mocks.NewMockProjectRepository(ctrl)
 	svc := NewProjectService(mockRepo)
-
 	ctx := context.Background()
-	accountID := "550e8400-e29b-41d4-a716-446655440000" // Valid UUID
-	req := &project.CreateProjectRequest{
-		AccountID: accountID,
-		Name:      "Test Project",
-		Config:    []byte(`{"color": "blue"}`),
+
+	validAccountID := "550e8400-e29b-41d4-a716-446655440000"
+
+	tests := []struct {
+		name          string
+		request       *project.CreateProjectRequest
+		setupMock     func()
+		expectedError string
+		expectNil     bool
+		validate      func(t *testing.T, res *entity.Project)
+	}{
+		{
+			name: "success - creates project with all fields",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "Test Project",
+				Config:    []byte(`{"color": "blue", "theme": "dark"}`),
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, proj *entity.Project) error {
+						assert.Equal(t, "Test Project", proj.Name)
+						assert.Equal(t, "owner", proj.Role)
+						assert.NotEmpty(t, proj.ID)
+						assert.NotEmpty(t, proj.AccountID)
+						return nil
+					}).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Project) {
+				assert.Equal(t, "Test Project", res.Name)
+				assert.Equal(t, "owner", res.Role)
+				assert.JSONEq(t, `{"color": "blue", "theme": "dark"}`, string(res.Config))
+			},
+		},
+		{
+			name: "success - creates project with minimal fields",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "Minimal Project",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Project) {
+				assert.Equal(t, "Minimal Project", res.Name)
+			},
+		},
+		{
+			name:          "error - nil request",
+			request:       nil,
+			setupMock:     func() {},
+			expectedError: "invalid request body",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name: "error - invalid account ID format (not UUID)",
+			request: &project.CreateProjectRequest{
+				AccountID: "invalid-uuid",
+				Name:      "Test Project",
+			},
+			setupMock:     func() {},
+			expectedError: "invalid account ID format",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name: "error - invalid account ID format (empty)",
+			request: &project.CreateProjectRequest{
+				AccountID: "",
+				Name:      "Test Project",
+			},
+			setupMock:     func() {},
+			expectedError: "invalid account ID format",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name: "error - invalid account ID format (partial UUID)",
+			request: &project.CreateProjectRequest{
+				AccountID: "550e8400-e29b-41d4",
+				Name:      "Test Project",
+			},
+			setupMock:     func() {},
+			expectedError: "invalid account ID format",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name: "error - repository create fails",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "Test Project",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					Return(errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to create project",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name: "success - creates project with empty name",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Project) {
+				assert.Equal(t, "", res.Name)
+			},
+		},
+		{
+			name: "success - creates project with nil config",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "No Config Project",
+				Config:    nil,
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Project) {
+				assert.Nil(t, res.Config)
+			},
+		},
 	}
 
-	t.Run("success", func(t *testing.T) {
-		mockRepo.EXPECT().
-			CreateProject(ctx, gomock.Any()).
-			Return(nil).
-			Times(1)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
 
-		res, err := svc.CreateProject(ctx, req)
+			res, err := svc.CreateProject(ctx, tt.request)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, req.Name, res.Name)
-		assert.Equal(t, req.Config, res.Config)
-	})
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
-	t.Run("invalid request body", func(t *testing.T) {
-		res, err := svc.CreateProject(ctx, nil)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		assert.Contains(t, err.Error(), "invalid request body")
-	})
-
-	t.Run("invalid account ID format", func(t *testing.T) {
-		invalidReq := &project.CreateProjectRequest{
-			AccountID: "invalid-uuid",
-		}
-		res, err := svc.CreateProject(ctx, invalidReq)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		assert.Contains(t, err.Error(), "invalid account ID format")
-	})
-
-	t.Run("repository error", func(t *testing.T) {
-		mockRepo.EXPECT().
-			CreateProject(ctx, gomock.Any()).
-			Return(assert.AnError).
-			Times(1)
-
-		res, err := svc.CreateProject(ctx, req)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-	})
+			if tt.expectNil {
+				assert.Nil(t, res)
+			} else {
+				assert.NotNil(t, res)
+				if tt.validate != nil {
+					tt.validate(t, res)
+				}
+			}
+		})
+	}
 }

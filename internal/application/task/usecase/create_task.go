@@ -7,9 +7,9 @@ import (
 	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type CreateTaskUseCase struct {
@@ -26,12 +26,12 @@ func NewCreateTaskUseCase(svc *service.TaskService, l logger.Logger) *CreateTask
 
 func (uc *CreateTaskUseCase) Execute(ctx context.Context, projectID string, req *task.CreateTaskRequest) (*task.CreateTaskResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	parsedProjectID, err := utils.ParseID(projectID, projectEntity.ProjectIDPrefix)
 	if err != nil {
-		return nil, apperrors.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
+		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
 	tsk, err := uc.taskService.CreateTask(ctx, parsedProjectID, req)

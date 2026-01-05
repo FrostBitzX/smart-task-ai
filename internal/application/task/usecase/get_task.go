@@ -6,9 +6,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type GetTaskByIDUseCase struct {
@@ -26,7 +26,7 @@ func NewGetTaskByIDUseCase(svc *service.TaskService, l logger.Logger) *GetTaskBy
 func (uc *GetTaskByIDUseCase) Execute(ctx context.Context, taskID string) (*task.GetTaskByIDResponse, error) {
 	parsedTaskID, err := utils.ParseID(taskID, entity.TaskIDPrefix)
 	if err != nil {
-		return nil, apperrors.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
+		return nil, apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
 	tsk, err := uc.taskService.GetTaskByID(ctx, parsedTaskID)

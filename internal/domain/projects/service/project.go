@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/google/uuid"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects"
@@ -22,13 +22,13 @@ func NewProjectService(repo projects.ProjectRepository) *ProjectService {
 
 func (s *ProjectService) CreateProject(ctx context.Context, req *project.CreateProjectRequest) (*entity.Project, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	// create domain entity
 	accountID, err := uuid.Parse(req.AccountID)
 	if err != nil {
-		return nil, apperrors.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
 	now := time.Now()
@@ -45,7 +45,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *project.CreateP
 	// persist account to database
 	err = s.repo.CreateProject(ctx, proj)
 	if err != nil {
-		return nil, apperrors.NewInternalServerError("failed to create project", "CREATE_PROJECT_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to create project", "CREATE_PROJECT_ERROR", err)
 	}
 
 	return proj, nil

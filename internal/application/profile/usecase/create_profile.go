@@ -7,9 +7,9 @@ import (
 	accountEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type CreateProfileUseCase struct {
@@ -26,7 +26,7 @@ func NewCreateProfileUseCase(svc *service.ProfileService, l logger.Logger) *Crea
 
 func (uc *CreateProfileUseCase) Execute(ctx context.Context, req *profile.CreateProfileRequest) (*profile.CreateProfileResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	prof, err := uc.profileService.CreateProfile(ctx, req)

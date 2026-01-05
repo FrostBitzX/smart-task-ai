@@ -8,6 +8,8 @@ servers: []
 
 # Tags for logical grouping of operations
 tags:
+  - name: health
+    description: Health check endpoints
   - name: account
     description: Operations related to account management
   - name: profile
@@ -19,6 +21,10 @@ tags:
 
 # All paths are referenced from external files
 paths:
+  # Health endpoints
+  /health:
+    $ref: "./resources/health/paths/collection.yml#/paths/~1health"
+
   # Account endpoints
   /api/signup:
     $ref: "./resources/account/paths/collection.yml#/paths/~1api~1signup"

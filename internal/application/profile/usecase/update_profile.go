@@ -7,9 +7,9 @@ import (
 	accountEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type UpdateProfileUseCase struct {
@@ -26,7 +26,7 @@ func NewUpdateProfileUseCase(svc *service.ProfileService, l logger.Logger) *Upda
 
 func (uc *UpdateProfileUseCase) Execute(ctx context.Context, req *profile.UpdateProfileRequest) (*profile.UpdateProfileResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	prof, err := uc.profileService.UpdateProfile(ctx, req)

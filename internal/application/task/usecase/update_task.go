@@ -6,9 +6,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type UpdateTaskUseCase struct {
@@ -25,12 +25,12 @@ func NewUpdateTaskUseCase(s *service.TaskService, l logger.Logger) *UpdateTaskUs
 
 func (uc *UpdateTaskUseCase) Execute(ctx context.Context, taskID string, req *task.UpdateTaskRequest) (*task.UpdateTaskResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	parsedTaskID, err := utils.ParseID(taskID, entity.TaskIDPrefix)
 	if err != nil {
-		return nil, apperrors.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
+		return nil, apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
 	result, err := uc.taskService.UpdateTask(ctx, parsedTaskID, req)

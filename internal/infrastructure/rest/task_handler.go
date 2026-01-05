@@ -3,10 +3,10 @@ package rest
 import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/requests"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/responses"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -49,7 +49,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	// Parse project ID from URL
 	projectID := c.Params("projectId")
 	if projectID == "" {
-		return responses.Error(c, apperrors.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
+		return responses.Error(c, apperror.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
 
 	data, err := h.CreateTaskUC.Execute(c.Context(), projectID, req)
@@ -63,7 +63,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 	taskID := c.Params("taskId")
 	if taskID == "" {
-		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
 	data, err := h.GetTaskByIDUC.Execute(c.Context(), taskID)
@@ -77,7 +77,7 @@ func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 func (h *TaskHandler) ListTasksByProject(c *fiber.Ctx) error {
 	projectID := c.Params("projectId")
 	if projectID == "" {
-		return responses.Error(c, apperrors.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
+		return responses.Error(c, apperror.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
 
 	data, err := h.ListTasksByProjectUC.Execute(c.Context(), projectID)
@@ -99,7 +99,7 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 
 	taskID := c.Params("taskId")
 	if taskID == "" {
-		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
 	data, err := h.UpdateTaskUC.Execute(c.Context(), taskID, req)
@@ -113,7 +113,7 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 func (h *TaskHandler) DeleteTask(c *fiber.Ctx) error {
 	taskID := c.Params("taskId")
 	if taskID == "" {
-		return responses.Error(c, apperrors.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
+		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
 	deletedID, err := h.DeleteTaskUC.Execute(c.Context(), taskID)

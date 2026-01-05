@@ -6,9 +6,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type CreateProjectUseCase struct {
@@ -25,7 +25,7 @@ func NewCreateProjectUseCase(svc *service.ProjectService, l logger.Logger) *Crea
 
 func (uc *CreateProjectUseCase) Execute(ctx context.Context, req *project.CreateProjectRequest) (*project.CreateProjectResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
 	prof, err := uc.projectService.CreateProject(ctx, req)
