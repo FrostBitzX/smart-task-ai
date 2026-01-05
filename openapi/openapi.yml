@@ -18,6 +18,8 @@ tags:
     description: Operations related to project management
   - name: task
     description: Operations related to task management
+  - name: chat
+    description: AI chat assistant for task management
 
 # All paths are referenced from external files
 paths:
@@ -52,3 +54,7 @@ paths:
 
   /api/tasks/{taskId}:
     $ref: "./resources/task/paths/item.yml#/paths/~1api~1tasks~1{taskId}"
+
+  # Chat endpoints
+  /api/{projectId}/chat:
+    $ref: "./resources/chat/paths/collection.yml#/paths/~1api~1{projectId}~1chat"
