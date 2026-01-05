@@ -271,8 +271,13 @@ func (fe *FunctionExecutor) executeGetTask(ctx context.Context, args json.RawMes
 
 func (fe *FunctionExecutor) executeListTasks(ctx context.Context, projectID uuid.UUID, args json.RawMessage) *FunctionResult {
 	var listArgs ListTasksArgs
-	if args != nil && len(args) > 0 {
-		json.Unmarshal(args, &listArgs)
+	if len(args) > 0 {
+		if err := json.Unmarshal(args, &listArgs); err != nil {
+			return &FunctionResult{
+				Success: false,
+				Error:   fmt.Sprintf("invalid arguments: %v", err),
+			}
+		}
 	}
 
 	tasks, err := fe.taskService.ListTasksByProject(ctx, projectID)

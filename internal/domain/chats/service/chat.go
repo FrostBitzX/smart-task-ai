@@ -365,7 +365,7 @@ func (s *chatService) handleGroqError(err error) error {
 }
 
 func (s *chatService) getAIConfig(project *projectEntity.Project) *chats.AIConfig {
-	if project.Config == nil || len(project.Config) == 0 {
+	if len(project.Config) == 0 {
 		return &chats.DefaultAIConfig
 	}
 
