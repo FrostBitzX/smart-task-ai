@@ -7,9 +7,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/common"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type ListAccountUseCase struct {
@@ -26,23 +26,11 @@ func NewListAccountUseCase(svc *service.AccountService, l logger.Logger) *ListAc
 
 func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAccountsRequest) (*account.ListAccountsResponse, error) {
 	if req == nil {
-		return nil, apperrors.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Set pagination defaults
-	var limit int
-	var offset int
-	if req.Limit == nil {
-		limit = 10
-	} else {
-		limit = *req.Limit
-	}
-
-	if req.Offset == nil {
-		offset = 0
-	} else {
-		offset = *req.Offset
-	}
+	// Set pagination
+	limit, offset := common.ValidatePagination(req.Limit, req.Offset)
 
 	// Get accounts from service
 	accounts, total, err := uc.accountService.ListAccounts(ctx, limit, offset)
@@ -62,7 +50,7 @@ func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAcco
 	}
 
 	// Calculate pagination info
-	hasMore := offset+limit < total
+	hasMore := common.CalculateHasMore(offset, limit, total)
 
 	// Build response
 	response := &account.ListAccountsResponse{

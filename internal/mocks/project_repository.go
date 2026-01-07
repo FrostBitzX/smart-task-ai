@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	entity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -53,4 +54,35 @@ func (m *MockProjectRepository) CreateProject(ctx context.Context, proj *entity.
 func (mr *MockProjectRepositoryMockRecorder) CreateProject(ctx, proj any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockProjectRepository)(nil).CreateProject), ctx, proj)
+}
+
+// GetProjectByID mocks base method.
+func (m *MockProjectRepository) GetProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectByID", ctx, projectID)
+	ret0, _ := ret[0].(*entity.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectByID indicates an expected call of GetProjectByID.
+func (mr *MockProjectRepositoryMockRecorder) GetProjectByID(ctx, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectByID", reflect.TypeOf((*MockProjectRepository)(nil).GetProjectByID), ctx, projectID)
+}
+
+// ListProjectByAccountID mocks base method.
+func (m *MockProjectRepository) ListProjectByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Project, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProjectByAccountID", ctx, accountID, limit, offset)
+	ret0, _ := ret[0].([]*entity.Project)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListProjectByAccountID indicates an expected call of ListProjectByAccountID.
+func (mr *MockProjectRepositoryMockRecorder) ListProjectByAccountID(ctx, accountID, limit, offset any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectByAccountID", reflect.TypeOf((*MockProjectRepository)(nil).ListProjectByAccountID), ctx, accountID, limit, offset)
 }

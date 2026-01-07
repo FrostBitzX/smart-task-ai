@@ -1,12 +1,15 @@
 package routes
 
 import (
+	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/groq"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/middlewares"
 
+	chatUC "github.com/FrostBitzX/smart-task-ai/internal/application/chat/usecase"
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
 	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
 	taskUC "github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
+	chatDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/chats/service"
 	profileDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
 	projectDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/service"
 	taskDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
@@ -37,10 +40,12 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	projectRepository := repo.NewProjectRepository(db)
 	projectService := projectDomain.NewProjectService(projectRepository)
 	createProjectUC := projectUC.NewCreateProjectUseCase(projectService, log)
-	projectHandlerInstance := handler.NewProjectHandler(createProjectUC, log)
+	listProjectByAccountUC := projectUC.NewListProjectByAccountUseCase(projectService, log)
+	projectHandlerInstance := handler.NewProjectHandler(createProjectUC, listProjectByAccountUC, log)
 
 	// Project routes
 	api.Post("/projects", projectHandlerInstance.CreateProject)
+	api.Get("/projects", projectHandlerInstance.ListProject)
 
 	// Task setup
 	taskRepository := repo.NewTaskRepository(db)
@@ -58,4 +63,19 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	api.Get("/tasks/:taskId", taskHandlerInstance.GetTaskByID)
 	api.Patch("/tasks/:taskId", taskHandlerInstance.UpdateTask)
 	api.Delete("/tasks/:taskId", taskHandlerInstance.DeleteTask)
+
+	// Chat setup
+	groqClient, err := groq.NewGroqClient()
+	if err != nil {
+		log.Warn("Failed to initialize Groq client, chat endpoints will not be available", map[string]interface{}{
+			"error": err.Error(),
+		})
+	} else {
+		chatService := chatDomain.NewChatService(groqClient, taskService, projectService)
+		sendMessageUC := chatUC.NewSendMessageUseCase(chatService, log)
+		chatHandlerInstance := handler.NewChatHandler(sendMessageUC, log)
+
+		// Chat routes (protected by JWT middleware via /api group)
+		api.Post("/:projectId/chat", chatHandlerInstance.SendMessage)
+	}
 }

@@ -8,9 +8,9 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	taskEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type ListTasksByProjectUseCase struct {
@@ -28,7 +28,7 @@ func NewListTasksByProjectUseCase(svc *service.TaskService, l logger.Logger) *Li
 func (uc *ListTasksByProjectUseCase) Execute(ctx context.Context, projectID string) (*task.ListTasksByProjectResponse, error) {
 	parsedProjectID, err := utils.ParseID(projectID, entity.ProjectIDPrefix)
 	if err != nil {
-		return nil, apperrors.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
+		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
 	tsks, err := uc.taskService.ListTasksByProject(ctx, parsedProjectID)

@@ -1,0 +1,136 @@
+paths:
+  /api/{projectId}/chat:
+    post:
+      operationId: sendMessage
+      summary: Send message to AI assistant
+      description: |
+        Send a message to the AI assistant and receive a response. 
+        The AI can help manage tasks including creating, updating, and deleting tasks.
+
+        Use `?stream=true` query parameter for streaming SSE response.
+      tags:
+        - chat
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: The project ID to scope the chat conversation
+          schema:
+            type: string
+            example: "proj_QsWNVMPBtXjDLiNfpMaWWw"
+        - name: stream
+          in: query
+          required: false
+          description: Enable streaming response (Server-Sent Events)
+          schema:
+            type: boolean
+            default: false
+            example: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/send-message-request.yml"
+      responses:
+        "200":
+          description: |
+            Message sent successfully.
+            - Without `stream=true`: Returns JSON response
+            - With `stream=true`: Returns Server-Sent Events stream
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      message:
+                        example: "Message sent successfully"
+                      data:
+                        $ref: "../schemas/send-message-response.yml"
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Server-Sent Events stream (when stream=true):
+                  - `data: <content>` - Content chunk from AI
+                  - `event: done\ndata: [DONE]` - Stream completed
+                  - `event: error\ndata: <error_message>` - Error occurred
+                example: |
+                  data: สวัสดี
+
+                  data: ครับ
+
+                  event: done
+                  data: [DONE]
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          description: Unauthorized - JWT token is missing or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "authentication required"
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "429":
+          description: Too many requests - Rate limited by AI service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Too many requests"
+                  code:
+                    type: string
+                    example: "RATE_LIMITED"
+        "503":
+          description: AI service temporarily unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "AI service temporarily unavailable"
+                  code:
+                    type: string
+                    example: "GROQ_UNAVAILABLE"
+        "504":
+          description: AI response timeout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "AI response timeout"
+                  code:
+                    type: string
+                    example: "GROQ_TIMEOUT"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"

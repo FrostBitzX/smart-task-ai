@@ -14,6 +14,8 @@ type Config struct {
 	DBUsername  string `mapstructure:"DB_USERNAME"`
 	DBPassword  string `mapstructure:"DB_PASSWORD"`
 	DBPort      string `mapstructure:"DB_PORT"`
+	GroqAPIKey  string `mapstructure:"GROQ_API_KEY"`
+	GroqAPIURL  string `mapstructure:"GROQ_API_URL"`
 }
 
 func NewConfig() *Config {
@@ -45,6 +47,12 @@ func NewConfig() *Config {
 	}
 	if err := viper.BindEnv("DB_PORT"); err != nil {
 		log.Fatalf("Unable to bind DB_PORT: %v", err)
+	}
+	if err := viper.BindEnv("GROQ_API_KEY"); err != nil {
+		log.Fatalf("Unable to bind GROQ_API_KEY: %v", err)
+	}
+	if err := viper.BindEnv("GROQ_API_URL"); err != nil {
+		log.Fatalf("Unable to bind GROQ_API_URL: %v", err)
 	}
 
 	if err := viper.Unmarshal(config); err != nil {

@@ -1,7 +1,7 @@
 package requests
 
 import (
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,7 +12,7 @@ func ParseAndValidate[T any](c *fiber.Ctx) (*T, error) {
 	var body T
 
 	if err := c.BodyParser(&body); err != nil {
-		return nil, apperrors.NewBadRequestError("Invalid JSON format", "INVALID_JSON", err)
+		return nil, apperror.NewBadRequestError("Invalid JSON format", "INVALID_JSON", err)
 	}
 
 	if err := validate.Struct(&body); err != nil {
@@ -26,7 +26,7 @@ func ParseAndValidateQuery[T any](c *fiber.Ctx) (*T, error) {
 	var q T
 
 	if err := c.QueryParser(&q); err != nil {
-		return nil, apperrors.NewBadRequestError("Invalid query parameters", "INVALID_QUERY", err)
+		return nil, apperror.NewBadRequestError("Invalid query parameters", "INVALID_QUERY", err)
 	}
 
 	if err := validate.Struct(&q); err != nil {
@@ -86,5 +86,5 @@ func validationError(err error) error {
 		}
 	}
 
-	return apperrors.NewBadRequestError(msg, "VALIDATION_FAILED", err)
+	return apperror.NewBadRequestError(msg, "VALIDATION_FAILED", err)
 }

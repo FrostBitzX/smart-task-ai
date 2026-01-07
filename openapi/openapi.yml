@@ -8,6 +8,8 @@ servers: []
 
 # Tags for logical grouping of operations
 tags:
+  - name: health
+    description: Health check endpoints
   - name: account
     description: Operations related to account management
   - name: profile
@@ -16,9 +18,15 @@ tags:
     description: Operations related to project management
   - name: task
     description: Operations related to task management
+  - name: chat
+    description: AI chat assistant for task management
 
 # All paths are referenced from external files
 paths:
+  # Health endpoints
+  /health:
+    $ref: "./resources/health/paths/collection.yml#/paths/~1health"
+
   # Account endpoints
   /api/signup:
     $ref: "./resources/account/paths/collection.yml#/paths/~1api~1signup"
@@ -46,3 +54,7 @@ paths:
 
   /api/tasks/{taskId}:
     $ref: "./resources/task/paths/item.yml#/paths/~1api~1tasks~1{taskId}"
+
+  # Chat endpoints
+  /api/{projectId}/chat:
+    $ref: "./resources/chat/paths/item.yml#/paths/~1api~1{projectId}~1chat"

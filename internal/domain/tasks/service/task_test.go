@@ -2,14 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/mocks"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -22,52 +25,171 @@ func TestTaskService_CreateTask(t *testing.T) {
 	ctx := context.Background()
 	projectID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		req := &task.CreateTaskRequest{
-			Name:     "Test Task",
-			Priority: "1",
-		}
-		mockRepo.EXPECT().
-			CreateTask(ctx, gomock.Any()).
-			Return(nil).
-			Times(1)
+	// Helper to create time strings
+	now := time.Now()
+	startTime := now.Add(time.Hour).Format(time.RFC3339)
+	endTime := now.Add(2 * time.Hour).Format(time.RFC3339)
+	sameTime := now.Format(time.RFC3339)
 
-		res, err := svc.CreateTask(ctx, projectID, req)
+	tests := []struct {
+		name          string
+		projectID     uuid.UUID
+		request       *task.CreateTaskRequest
+		setupMock     func()
+		expectedError string
+		expectNil     bool
+		validate      func(t *testing.T, res *entity.Task)
+	}{
+		{
+			name:      "success - creates task with all fields",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:          "Test Task",
+				Description:   strPtr("Task description"),
+				Priority:      "1",
+				StartDateTime: &startTime,
+				EndDateTime:   &endTime,
+				Location:      strPtr("Office"),
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateTask(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, tsk *entity.Task) error {
+						assert.Equal(t, "Test Task", tsk.Name)
+						assert.Equal(t, "todo", tsk.Status)
+						assert.Equal(t, projectID, tsk.ProjectID)
+						return nil
+					}).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Task) {
+				assert.Equal(t, "Test Task", res.Name)
+				assert.Equal(t, "todo", res.Status)
+			},
+		},
+		{
+			name:      "success - creates task with minimal fields",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:     "Minimal Task",
+				Priority: "2",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateTask(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+			validate: func(t *testing.T, res *entity.Task) {
+				assert.Equal(t, "Minimal Task", res.Name)
+			},
+		},
+		{
+			name:          "error - nil request",
+			projectID:     projectID,
+			request:       nil,
+			setupMock:     func() {},
+			expectedError: "invalid request body",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - same start and end time",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:          "Test Task",
+				StartDateTime: &sameTime,
+				EndDateTime:   &sameTime,
+			},
+			setupMock:     func() {},
+			expectedError: "cannot be the same",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - end time before start time",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:          "Test Task",
+				StartDateTime: &endTime,   // Later time as start
+				EndDateTime:   &startTime, // Earlier time as end
+			},
+			setupMock:     func() {},
+			expectedError: "end_datetime must be greater than start_datetime",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - invalid start datetime format",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:          "Test Task",
+				StartDateTime: strPtr("invalid-date"),
+				EndDateTime:   &endTime,
+			},
+			setupMock:     func() {},
+			expectedError: "invalid start_datetime format",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - invalid end datetime format",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:          "Test Task",
+				StartDateTime: &startTime,
+				EndDateTime:   strPtr("invalid-date"),
+			},
+			setupMock:     func() {},
+			expectedError: "invalid end_datetime format",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - repository create fails",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name: "Test Task",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateTask(ctx, gomock.Any()).
+					Return(errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to create task",
+			expectNil:     true,
+			validate:      nil,
+		},
+	}
 
-		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, req.Name, res.Name)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
 
-	t.Run("invalid time range - same time", func(t *testing.T) {
-		nowStr := time.Now().Format(time.RFC3339)
-		req := &task.CreateTaskRequest{
-			Name:          "Test Task",
-			StartDateTime: &nowStr,
-			EndDateTime:   &nowStr,
-		}
+			res, err := svc.CreateTask(ctx, tt.projectID, tt.request)
 
-		res, err := svc.CreateTask(ctx, projectID, req)
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		assert.Contains(t, err.Error(), "cannot be the same")
-	})
-
-	t.Run("repository error", func(t *testing.T) {
-		req := &task.CreateTaskRequest{
-			Name: "Test Task",
-		}
-		mockRepo.EXPECT().
-			CreateTask(ctx, gomock.Any()).
-			Return(assert.AnError).
-			Times(1)
-
-		res, err := svc.CreateTask(ctx, projectID, req)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-	})
+			if tt.expectNil {
+				assert.Nil(t, res)
+			} else {
+				assert.NotNil(t, res)
+				if tt.validate != nil {
+					tt.validate(t, res)
+				}
+			}
+		})
+	}
 }
 
 func TestTaskService_GetTaskByID(t *testing.T) {
@@ -79,30 +201,77 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 	ctx := context.Background()
 	taskID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		expectedTask := &entity.Task{ID: taskID, Name: "Test Task"}
-		mockRepo.EXPECT().
-			GetTaskByID(ctx, taskID).
-			Return(expectedTask, nil).
-			Times(1)
+	tests := []struct {
+		name          string
+		taskID        uuid.UUID
+		setupMock     func()
+		expectedError string
+		expectNil     bool
+	}{
+		{
+			name:   "success - returns task",
+			taskID: taskID,
+			setupMock: func() {
+				expectedTask := &entity.Task{
+					ID:     taskID,
+					Name:   "Test Task",
+					Status: "todo",
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(expectedTask, nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+		},
+		{
+			name:   "error - task not found",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(nil, apperror.ErrRecordNotFound).
+					Times(1)
+			},
+			expectedError: "task not found",
+			expectNil:     true,
+		},
+		{
+			name:   "error - repository fails",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(nil, errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to get task",
+			expectNil:     true,
+		},
+	}
 
-		res, err := svc.GetTaskByID(ctx, taskID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
 
-		assert.NoError(t, err)
-		assert.Equal(t, expectedTask, res)
-	})
+			res, err := svc.GetTaskByID(ctx, tt.taskID)
 
-	t.Run("not found", func(t *testing.T) {
-		mockRepo.EXPECT().
-			GetTaskByID(ctx, taskID).
-			Return(nil, assert.AnError).
-			Times(1)
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
-		res, err := svc.GetTaskByID(ctx, taskID)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-	})
+			if tt.expectNil {
+				assert.Nil(t, res)
+			} else {
+				assert.NotNil(t, res)
+				assert.Equal(t, taskID, res.ID)
+			}
+		})
+	}
 }
 
 func TestTaskService_UpdateTask(t *testing.T) {
@@ -114,41 +283,146 @@ func TestTaskService_UpdateTask(t *testing.T) {
 	ctx := context.Background()
 	taskID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		existingTask := &entity.Task{ID: taskID, Status: "todo", Name: "Old Name"}
-		req := &task.UpdateTaskRequest{Name: "New Name"}
+	now := time.Now()
+	newStartTime := now.Add(time.Hour).Format(time.RFC3339)
 
-		mockRepo.EXPECT().
-			GetTaskByID(ctx, taskID).
-			Return(existingTask, nil).
-			Times(1)
-		mockRepo.EXPECT().
-			UpdateTask(ctx, gomock.Any()).
-			Return(nil).
-			Times(1)
+	tests := []struct {
+		name          string
+		taskID        uuid.UUID
+		request       *task.UpdateTaskRequest
+		setupMock     func()
+		expectedError string
+		expectNil     bool
+	}{
+		{
+			name:   "success - updates task name",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				Name: "Updated Name",
+			},
+			setupMock: func() {
+				existingTask := &entity.Task{
+					ID:     taskID,
+					Status: "todo",
+					Name:   "Old Name",
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(existingTask, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					UpdateTask(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, tsk *entity.Task) error {
+						assert.Equal(t, "Updated Name", tsk.Name)
+						return nil
+					}).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+		},
+		{
+			name:   "error - cannot update start_datetime when status is not todo",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				StartDateTime: &newStartTime,
+			},
+			setupMock: func() {
+				existingTask := &entity.Task{
+					ID:     taskID,
+					Status: "doing", // Not "todo"
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(existingTask, nil).
+					Times(1)
+			},
+			expectedError: "cannot update start_datetime when status is not todo",
+			expectNil:     true,
+		},
+		{
+			name:   "success - can update start_datetime when status is todo",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				StartDateTime: &newStartTime,
+			},
+			setupMock: func() {
+				existingTask := &entity.Task{
+					ID:     taskID,
+					Status: "todo",
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(existingTask, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					UpdateTask(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+		},
+		{
+			name:   "error - task not found",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				Name: "Updated",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(nil, apperror.ErrRecordNotFound).
+					Times(1)
+			},
+			expectedError: "task not found",
+			expectNil:     true,
+		},
+		{
+			name:   "error - repository update fails",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				Name: "Updated",
+			},
+			setupMock: func() {
+				existingTask := &entity.Task{
+					ID:     taskID,
+					Status: "todo",
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(existingTask, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					UpdateTask(ctx, gomock.Any()).
+					Return(errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to update task",
+			expectNil:     true,
+		},
+	}
 
-		res, err := svc.UpdateTask(ctx, taskID, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
 
-		assert.NoError(t, err)
-		assert.Equal(t, "New Name", res.Name)
-	})
+			res, err := svc.UpdateTask(ctx, tt.taskID, tt.request)
 
-	t.Run("cannot update start_datetime when not todo", func(t *testing.T) {
-		existingTask := &entity.Task{ID: taskID, Status: "doing"}
-		newDate := time.Now().Format(time.RFC3339)
-		req := &task.UpdateTaskRequest{StartDateTime: &newDate}
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
-		mockRepo.EXPECT().
-			GetTaskByID(ctx, taskID).
-			Return(existingTask, nil).
-			Times(1)
-
-		res, err := svc.UpdateTask(ctx, taskID, req)
-
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		assert.Contains(t, err.Error(), "cannot update start_datetime")
-	})
+			if tt.expectNil {
+				assert.Nil(t, res)
+			} else {
+				assert.NotNil(t, res)
+			}
+		})
+	}
 }
 
 func TestTaskService_DeleteTask(t *testing.T) {
@@ -160,18 +434,158 @@ func TestTaskService_DeleteTask(t *testing.T) {
 	ctx := context.Background()
 	taskID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		mockRepo.EXPECT().
-			GetTaskByID(ctx, taskID).
-			Return(&entity.Task{}, nil).
-			Times(1)
-		mockRepo.EXPECT().
-			DeleteTask(ctx, taskID).
-			Return(nil).
-			Times(1)
+	tests := []struct {
+		name          string
+		taskID        uuid.UUID
+		setupMock     func()
+		expectedError string
+	}{
+		{
+			name:   "success - deletes task",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(&entity.Task{ID: taskID}, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					DeleteTask(ctx, taskID).
+					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+		},
+		{
+			name:   "error - task not found",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(nil, apperror.ErrRecordNotFound).
+					Times(1)
+			},
+			expectedError: "task not found",
+		},
+		{
+			name:   "error - repository get fails",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(nil, errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to get task",
+		},
+		{
+			name:   "error - repository delete fails",
+			taskID: taskID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(&entity.Task{ID: taskID}, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					DeleteTask(ctx, taskID).
+					Return(errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to delete task",
+		},
+	}
 
-		err := svc.DeleteTask(ctx, taskID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
 
-		assert.NoError(t, err)
-	})
+			err := svc.DeleteTask(ctx, tt.taskID)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestTaskService_ListTasksByProject(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockTaskRepository(ctrl)
+	svc := NewTaskService(mockRepo)
+	ctx := context.Background()
+	projectID := uuid.New()
+
+	tests := []struct {
+		name          string
+		projectID     uuid.UUID
+		setupMock     func()
+		expectedCount int
+		expectedError string
+	}{
+		{
+			name:      "success - returns tasks",
+			projectID: projectID,
+			setupMock: func() {
+				tasks := []*entity.Task{
+					{ID: uuid.New(), Name: "Task 1", ProjectID: projectID},
+					{ID: uuid.New(), Name: "Task 2", ProjectID: projectID},
+				}
+				mockRepo.EXPECT().
+					ListTasksByProject(ctx, projectID).
+					Return(tasks, nil).
+					Times(1)
+			},
+			expectedCount: 2,
+			expectedError: "",
+		},
+		{
+			name:      "success - returns empty list",
+			projectID: projectID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					ListTasksByProject(ctx, projectID).
+					Return([]*entity.Task{}, nil).
+					Times(1)
+			},
+			expectedCount: 0,
+			expectedError: "",
+		},
+		{
+			name:      "error - repository fails",
+			projectID: projectID,
+			setupMock: func() {
+				mockRepo.EXPECT().
+					ListTasksByProject(ctx, projectID).
+					Return(nil, errors.New("database error")).
+					Times(1)
+			},
+			expectedCount: 0,
+			expectedError: "failed to list tasks",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+
+			res, err := svc.ListTasksByProject(ctx, tt.projectID)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Len(t, res, tt.expectedCount)
+			}
+		})
+	}
+}
+
+// Helper function to create string pointers
+func strPtr(s string) *string {
+	return &s
 }

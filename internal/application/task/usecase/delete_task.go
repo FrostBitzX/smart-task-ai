@@ -5,9 +5,9 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 )
 
 type DeleteTaskUseCase struct {
@@ -25,7 +25,7 @@ func NewDeleteTaskUseCase(s *service.TaskService, l logger.Logger) *DeleteTaskUs
 func (uc *DeleteTaskUseCase) Execute(ctx context.Context, taskID string) (string, error) {
 	parsedTaskID, err := utils.ParseID(taskID, entity.TaskIDPrefix)
 	if err != nil {
-		return "", apperrors.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
+		return "", apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
 	err = uc.taskService.DeleteTask(ctx, parsedTaskID)

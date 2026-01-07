@@ -4,8 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/FrostBitzX/smart-task-ai/internal/errors/apperrors"
-
+	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -36,12 +35,12 @@ func Error(c *fiber.Ctx, err error) error {
 	var code string
 	var message string
 
-	if appErr, ok := apperrors.IsAppError(err); ok {
+	if appErr, ok := apperror.IsAppError(err); ok {
 		status = appErr.Status
 		code = appErr.Code
 		message = appErr.Message
 	} else {
-		status = apperrors.StatusCode(err)
+		status = apperror.StatusCode(err)
 		code = "INTERNAL_SERVER_ERROR"
 		message = err.Error()
 	}

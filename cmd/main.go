@@ -3,8 +3,12 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
+	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/handlers"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/middlewares"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/routes"
 	"gorm.io/gorm"
@@ -29,13 +33,31 @@ func main() {
 
 	cfg := config.NewConfig()
 	db := database.NewDB(cfg)
+	dbConnector := database.NewDBConnector(db)
 
 	app := fiber.New(fiber.Config{
 		AppName: "smart-task-ai",
 	})
 
 	zapLogger := logger.NewZapLogger()
+
+	// Panic recovery middleware (should be first)
+	app.Use(middlewares.RecoverMiddleware(zapLogger))
+
+	// Request timeout middleware
+	app.Use(middlewares.TimeoutMiddleware(middlewares.TimeoutConfig{
+		Timeout:      30 * time.Second,
+		ErrorMessage: "Request timeout",
+	}))
+
+	// Logger middleware
 	app.Use(middlewares.FiberLoggerMiddleware(zapLogger))
+
+	// CORS middleware
+	allowOrigins := os.Getenv("CORS_ALLOW_ORIGINS")
+	if allowOrigins == "" {
+		allowOrigins = "http://localhost:3000"
+	}
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000,https://smart-task-ai-fe-prod.vercel.app",
@@ -44,6 +66,11 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Health check route (public, no auth required)
+	healthHandler := handlers.NewHealthHandler(dbConnector)
+	app.Get("/health", healthHandler.Health)
+
+	// Application routes
 	routes.RegisterPublicRoutes(app, db, zapLogger)
 	routes.RegisterPrivateRoutes(app, db, zapLogger)
 
@@ -52,6 +79,24 @@ func main() {
 		addr = ":" + port
 	}
 
-	log.Printf("🚀 server running on %s", addr)
-	log.Fatal(app.Listen(addr))
+	// Graceful shutdown
+	go func() {
+		log.Printf("🚀 server running on %s", addr)
+		if err := app.Listen(addr); err != nil {
+			log.Fatalf("❌ server error: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("🛑 Shutting down server...")
+
+	if err := app.Shutdown(); err != nil {
+		log.Fatalf("❌ Server forced to shutdown: %v", err)
+	}
+
+	log.Println("✅ Server exited gracefully")
 }

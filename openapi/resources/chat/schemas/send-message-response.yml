@@ -1,0 +1,11 @@
+type: object
+properties:
+  message:
+    type: string
+    description: The AI assistant's response message
+    example: "สร้าง task \"ประชุมทีม\" เรียบร้อยแล้ว ✅"
+  task_actions:
+    type: array
+    description: List of task actions performed by the AI
+    items:
+      $ref: "./task-action-response.yml"
