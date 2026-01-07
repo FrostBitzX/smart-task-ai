@@ -36,7 +36,7 @@ func (h *ChatHandler) SendMessage(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
 
-	// Check if streaming is requested via query param
+	// Check if streaming is requested via query param (default: false)
 	stream := c.Query("stream", "false") == "true"
 
 	req, err := requests.ParseAndValidate[chat.SendMessageRequestDTO](c)
@@ -56,9 +56,26 @@ func (h *ChatHandler) SendMessage(c *fiber.Ctx) error {
 		return responses.Error(c, err)
 	}
 
-	// Always use streaming response
-	_ = stream // stream query param kept for backward compatibility
-	return h.handleStreamResponse(c, accountID, req)
+	// Use streaming only when explicitly requested with ?stream=true
+	if stream {
+		return h.handleStreamResponse(c, accountID, req)
+	}
+	return h.handleNonStreamResponse(c, accountID, req)
+}
+
+// handleNonStreamResponse handles non-streaming JSON response
+func (h *ChatHandler) handleNonStreamResponse(c *fiber.Ctx, accountID string, req *chat.SendMessageRequestDTO) error {
+	resp, err := h.sendMessageUC.Execute(c.Context(), accountID, req)
+	if err != nil {
+		h.logger.Error("Failed to send message", map[string]interface{}{
+			"error":      err.Error(),
+			"account_id": accountID,
+			"project_id": req.ProjectID,
+		})
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, resp)
 }
 
 // handleStreamResponse handles streaming SSE response

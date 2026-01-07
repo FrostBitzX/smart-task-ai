@@ -6,6 +6,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/chat"
 	chatSvc "github.com/FrostBitzX/smart-task-ai/internal/domain/chats/service"
 	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
+	taskEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/groq"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
@@ -27,8 +28,36 @@ func NewSendMessageUseCase(cs chatSvc.ChatService, l logger.Logger) *SendMessage
 	}
 }
 
+// Execute sends a message to the AI assistant and returns a non-streaming response
+func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, req *chat.SendMessageRequestDTO) (*chat.SendMessageResponseDTO, error) {
+	serviceReq, err := uc.buildServiceRequest(accountID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := uc.chatService.SendMessage(ctx, serviceReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chat.SendMessageResponseDTO{
+		Message:     resp.Message,
+		TaskActions: convertTaskActions(resp.TaskActions),
+	}, nil
+}
+
 // ExecuteStream sends a message to the AI assistant and returns a streaming response
 func (uc *SendMessageUseCase) ExecuteStream(ctx context.Context, accountID string, req *chat.SendMessageRequestDTO) (<-chan groq.StreamChunk, error) {
+	serviceReq, err := uc.buildServiceRequest(accountID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return uc.chatService.SendMessageStream(ctx, serviceReq)
+}
+
+// buildServiceRequest validates and converts DTO to service request
+func (uc *SendMessageUseCase) buildServiceRequest(accountID string, req *chat.SendMessageRequestDTO) (*chatSvc.SendMessageRequest, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
@@ -43,12 +72,12 @@ func (uc *SendMessageUseCase) ExecuteStream(ctx context.Context, accountID strin
 		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
-	return uc.chatService.SendMessageStream(ctx, &chatSvc.SendMessageRequest{
+	return &chatSvc.SendMessageRequest{
 		ProjectID:      parsedProjectID,
 		AccountID:      parsedAccountID,
 		Content:        req.Content,
 		SessionHistory: convertSessionHistory(req.SessionHistory),
-	})
+	}, nil
 }
 
 // convertSessionHistory converts DTOs to domain messages
@@ -65,4 +94,21 @@ func convertSessionHistory(history []chat.MessageDTO) []groq.ChatMessage {
 		}
 	}
 	return messages
+}
+
+// convertTaskActions converts domain task actions to DTOs
+func convertTaskActions(actions []chatSvc.TaskAction) []chat.TaskActionDTO {
+	if len(actions) == 0 {
+		return nil
+	}
+
+	dtos := make([]chat.TaskActionDTO, len(actions))
+	for i, action := range actions {
+		dtos[i] = chat.TaskActionDTO{
+			Type:   action.Type,
+			TaskID: utils.ShortUUIDWithPrefix(action.TaskID, taskEntity.TaskIDPrefix),
+			Name:   action.Name,
+		}
+	}
+	return dtos
 }
