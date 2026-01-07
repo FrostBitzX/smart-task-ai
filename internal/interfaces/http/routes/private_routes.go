@@ -38,17 +38,30 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 
 	// Project setup
 	projectRepository := repo.NewProjectRepository(db)
-	projectService := projectDomain.NewProjectService(projectRepository)
+	taskRepository := repo.NewTaskRepository(db)
+	projectService := projectDomain.NewProjectService(projectRepository, taskRepository)
 	createProjectUC := projectUC.NewCreateProjectUseCase(projectService, log)
 	listProjectByAccountUC := projectUC.NewListProjectByAccountUseCase(projectService, log)
-	projectHandlerInstance := handler.NewProjectHandler(createProjectUC, listProjectByAccountUC, log)
+	getProjectByIDUC := projectUC.NewGetProjectByIDUseCase(projectService, log)
+	updateProjectUC := projectUC.NewUpdateProjectUseCase(projectService, log)
+	deleteProjectUC := projectUC.NewDeleteProjectUseCase(projectService, log)
+	projectHandlerInstance := handler.NewProjectHandler(
+		createProjectUC,
+		listProjectByAccountUC,
+		getProjectByIDUC,
+		updateProjectUC,
+		deleteProjectUC,
+		log,
+	)
 
 	// Project routes
 	api.Post("/projects", projectHandlerInstance.CreateProject)
 	api.Get("/projects", projectHandlerInstance.ListProject)
+	api.Get("/projects/:projectId", projectHandlerInstance.GetProject)
+	api.Patch("/projects/:projectId", projectHandlerInstance.UpdateProject)
+	api.Delete("/projects/:projectId", projectHandlerInstance.DeleteProject)
 
 	// Task setup
-	taskRepository := repo.NewTaskRepository(db)
 	taskService := taskDomain.NewTaskService(taskRepository)
 	createTaskUC := taskUC.NewCreateTaskUseCase(taskService, log)
 	getTaskByIDUC := taskUC.NewGetTaskByIDUseCase(taskService, log)

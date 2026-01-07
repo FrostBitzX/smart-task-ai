@@ -42,6 +42,21 @@ func (m *MockTaskRepository) EXPECT() *MockTaskRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CountTasksByProject mocks base method.
+func (m *MockTaskRepository) CountTasksByProject(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountTasksByProject", ctx, projectID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountTasksByProject indicates an expected call of CountTasksByProject.
+func (mr *MockTaskRepositoryMockRecorder) CountTasksByProject(ctx, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).CountTasksByProject), ctx, projectID)
+}
+
 // CreateTask mocks base method.
 func (m *MockTaskRepository) CreateTask(ctx context.Context, task *entity.Task) error {
 	m.ctrl.T.Helper()

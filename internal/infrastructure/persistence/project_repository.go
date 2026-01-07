@@ -49,3 +49,11 @@ func (r *projectRepository) ListProjectByAccountID(ctx context.Context, accountI
 
 	return projects, int(total), err
 }
+
+func (r *projectRepository) UpdateProject(ctx context.Context, proj *entity.Project) error {
+	return r.db.WithContext(ctx).Save(proj).Error
+}
+
+func (r *projectRepository) DeleteProject(ctx context.Context, projectID uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&entity.Project{}, projectID).Error
+}

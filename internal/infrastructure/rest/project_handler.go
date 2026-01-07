@@ -13,17 +13,26 @@ import (
 type ProjectHandler struct {
 	CreateProjectUC        *usecase.CreateProjectUseCase
 	ListProjectByAccountUC *usecase.ListProjectByAccountUseCase
+	GetProjectByIDUC       *usecase.GetProjectByIDUseCase
+	UpdateProjectUC        *usecase.UpdateProjectUseCase
+	DeleteProjectUC        *usecase.DeleteProjectUseCase
 	logger                 logger.Logger
 }
 
 func NewProjectHandler(
 	create *usecase.CreateProjectUseCase,
 	list *usecase.ListProjectByAccountUseCase,
+	get *usecase.GetProjectByIDUseCase,
+	update *usecase.UpdateProjectUseCase,
+	delete *usecase.DeleteProjectUseCase,
 	l logger.Logger,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		CreateProjectUC:        create,
 		ListProjectByAccountUC: list,
+		GetProjectByIDUC:       get,
+		UpdateProjectUC:        update,
+		DeleteProjectUC:        delete,
 		logger:                 l,
 	}
 }
@@ -91,4 +100,56 @@ func (h *ProjectHandler) ListProject(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "List Projects successfully")
+}
+
+func (h *ProjectHandler) GetProject(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	data, err := h.GetProjectByIDUC.Execute(c.Context(), projectID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Project retrieved successfully")
+}
+
+func (h *ProjectHandler) UpdateProject(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	req, err := requests.ParseAndValidate[project.UpdateProjectRequest](c)
+	if err != nil {
+		h.logger.Warn("Invalid request data", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return responses.Error(c, err)
+	}
+
+	req.ProjectID = projectID
+
+	data, err := h.UpdateProjectUC.Execute(c.Context(), req)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Project updated successfully")
+}
+
+func (h *ProjectHandler) DeleteProject(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	data, err := h.DeleteProjectUC.Execute(c.Context(), projectID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Project deleted successfully")
 }

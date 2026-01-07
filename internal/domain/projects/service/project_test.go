@@ -18,7 +18,8 @@ func TestProjectService_CreateProject(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockProjectRepository(ctrl)
-	svc := NewProjectService(mockRepo)
+	mockTaskRepo := mocks.NewMockTaskRepository(ctrl)
+	svc := NewProjectService(mockRepo, mockTaskRepo)
 	ctx := context.Background()
 
 	validAccountID := "550e8400-e29b-41d4-a716-446655440000"

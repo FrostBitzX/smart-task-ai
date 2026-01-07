@@ -1,0 +1,105 @@
+paths:
+  /api/projects/{projectId}:
+    get:
+      operationId: GetProject
+      summary: Get project by ID
+      description: Get project by ID
+      tags:
+        - project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "proj_KwSysDpxcBU9FNhGkn2dCf"
+      responses:
+        "200":
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "../schemas/get-project-response.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
+    patch:
+      operationId: UpdateProject
+      summary: Update project by ID
+      description: Update project by ID
+      tags:
+        - project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "proj_KwSysDpxcBU9FNhGkn2dCf"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/update-project-request.yml"
+      responses:
+        "200":
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      message:
+                        example: "Project updated successfully"
+                      data:
+                        $ref: "../schemas/update-project-response.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"
+    delete:
+      operationId: DeleteProject
+      summary: Delete project
+      description: Delete project by ID
+      tags:
+        - project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "proj_KwSysDpxcBU9FNhGkn2dCf"
+      responses:
+        "200":
+          description: Project deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../../shared/schemas/success.yml"
+                  - type: object
+                    properties:
+                      message:
+                        example: "Project deleted successfully"
+                      data:
+                        $ref: "../schemas/delete-project-response.yml"
+        "400":
+          $ref: "../../../shared/responses/bad-request.yml"
+        "404":
+          $ref: "../../../shared/responses/not-found.yml"
+        "500":
+          $ref: "../../../shared/responses/internal-server-error.yml"

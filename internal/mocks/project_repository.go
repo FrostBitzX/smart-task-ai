@@ -56,6 +56,20 @@ func (mr *MockProjectRepositoryMockRecorder) CreateProject(ctx, proj any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockProjectRepository)(nil).CreateProject), ctx, proj)
 }
 
+// DeleteProject mocks base method.
+func (m *MockProjectRepository) DeleteProject(ctx context.Context, projectID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProject", ctx, projectID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteProject indicates an expected call of DeleteProject.
+func (mr *MockProjectRepositoryMockRecorder) DeleteProject(ctx, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockProjectRepository)(nil).DeleteProject), ctx, projectID)
+}
+
 // GetProjectByID mocks base method.
 func (m *MockProjectRepository) GetProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error) {
 	m.ctrl.T.Helper()
@@ -85,4 +99,18 @@ func (m *MockProjectRepository) ListProjectByAccountID(ctx context.Context, acco
 func (mr *MockProjectRepositoryMockRecorder) ListProjectByAccountID(ctx, accountID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectByAccountID", reflect.TypeOf((*MockProjectRepository)(nil).ListProjectByAccountID), ctx, accountID, limit, offset)
+}
+
+// UpdateProject mocks base method.
+func (m *MockProjectRepository) UpdateProject(ctx context.Context, proj *entity.Project) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProject", ctx, proj)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateProject indicates an expected call of UpdateProject.
+func (mr *MockProjectRepositoryMockRecorder) UpdateProject(ctx, proj any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProject", reflect.TypeOf((*MockProjectRepository)(nil).UpdateProject), ctx, proj)
 }

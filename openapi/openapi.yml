@@ -48,6 +48,9 @@ paths:
   /api/projects:
     $ref: "./resources/project/paths/collection.yml#/paths/~1api~1projects"
 
+  /api/projects/{projectId}:
+    $ref: "./resources/project/paths/item.yml#/paths/~1api~1projects~1{projectId}"
+
   # Task endpoints
   /api/{projectId}/tasks:
     $ref: "./resources/task/paths/item.yml#/paths/~1api~1{projectId}~1tasks"

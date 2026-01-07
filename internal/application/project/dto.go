@@ -9,7 +9,7 @@ import (
 
 type CreateProjectRequest struct {
 	AccountID string          `json:"account_id"`
-	Name      string          `json:"name" validate:"min=0,max=50"`
+	Name      string          `json:"name" validate:"required,max=50"`
 	Config    json.RawMessage `json:"config"`
 }
 
@@ -34,4 +34,22 @@ type ProjectResponse struct {
 type ListProjectResponse struct {
 	Items      []ProjectResponse `json:"items"`
 	Pagination common.Pagination `json:"pagination"`
+}
+
+type UpdateProjectRequest struct {
+	ProjectID string          `json:"-"`
+	Name      string          `json:"name" validate:"required,max=50"`
+	Config    json.RawMessage `json:"config" validate:"omitempty"`
+}
+
+type UpdateProjectResponse struct {
+	ID        string          `json:"id"`
+	Name      string          `json:"name"`
+	Config    json.RawMessage `json:"config"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+type DeleteProjectResponse struct {
+	ProjectID string `json:"project_id"`
 }

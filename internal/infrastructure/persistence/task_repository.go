@@ -43,6 +43,15 @@ func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.
 	return tasks, nil
 }
 
+func (r *taskRepository) CountTasksByProject(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&entity.Task{}).
+		Where("project_id = ?", projectID).
+		Count(&count).Error
+	return count, err
+}
+
 func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task) error {
 	return r.db.WithContext(ctx).Save(task).Error
 }

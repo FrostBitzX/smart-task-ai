@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 const ProjectIDPrefix = "proj"
@@ -18,7 +19,7 @@ type Project struct {
 	Config    json.RawMessage `json:"config" gorm:"type:jsonb"`
 	CreatedAt time.Time       `json:"createdAt" gorm:"not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time       `json:"updatedAt" gorm:"not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt *time.Time      `json:"deletedAt" gorm:"default:null"`
+	DeletedAt gorm.DeletedAt  `json:"deletedAt" gorm:"column:deleted_at;index"`
 }
 
 func (Project) TableName() string {
