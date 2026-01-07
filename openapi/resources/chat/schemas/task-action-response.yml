@@ -1,0 +1,18 @@
+type: object
+properties:
+  type:
+    type: string
+    enum:
+      - created
+      - updated
+      - deleted
+    description: The type of action performed on the task
+    example: "created"
+  task_id:
+    type: string
+    description: The ID of the task that was affected
+    example: "tsk_QsWNVMPBtXjDLiNfpMaWWw"
+  name:
+    type: string
+    description: The name of the task
+    example: "ประชุมทีม"
