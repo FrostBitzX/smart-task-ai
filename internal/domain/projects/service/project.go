@@ -63,3 +63,12 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, projectID uuid.UUID
 
 	return proj, nil
 }
+
+func (s *ProjectService) ListProjectByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Project, int, error) {
+	projs, total, err := s.repo.ListProjectByAccountID(ctx, accountID, limit, offset)
+	if err != nil {
+		return nil, 0, apperror.NewInternalServerError("failed to list projects", "LIST_PROJECT_ERROR", err)
+	}
+
+	return projs, total, nil
+}

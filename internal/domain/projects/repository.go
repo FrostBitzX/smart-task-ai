@@ -11,4 +11,5 @@ import (
 type ProjectRepository interface {
 	CreateProject(ctx context.Context, proj *entity.Project) error
 	GetProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error)
+	ListProjectByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Project, int, error)
 }

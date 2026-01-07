@@ -57,4 +57,4 @@ paths:
 
   # Chat endpoints
   /api/{projectId}/chat:
-    $ref: "./resources/chat/paths/collection.yml#/paths/~1api~1{projectId}~1chat"
+    $ref: "./resources/chat/paths/item.yml#/paths/~1api~1{projectId}~1chat"

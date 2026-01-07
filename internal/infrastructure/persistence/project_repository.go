@@ -31,3 +31,21 @@ func (r *projectRepository) GetProjectByID(ctx context.Context, projectID uuid.U
 	}
 	return &proj, nil
 }
+
+func (r *projectRepository) ListProjectByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Project, int, error) {
+	var projects []*entity.Project
+	var total int64
+
+	// Get total count
+	if err := r.db.WithContext(ctx).Model(&entity.Project{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	err := r.db.WithContext(ctx).
+		Limit(limit).
+		Offset(offset).
+		Find(&projects).Error
+
+	return projects, int(total), err
+}

@@ -6,7 +6,7 @@ paths:
       description: |
         Send a message to the AI assistant and receive a response. 
         The AI can help manage tasks including creating, updating, and deleting tasks.
-        
+
         Use `?stream=true` query parameter for streaming SSE response.
       tags:
         - chat
@@ -59,9 +59,9 @@ paths:
                   - `event: error\ndata: <error_message>` - Error occurred
                 example: |
                   data: สวัสดี
-                  
+
                   data: ครับ
-                  
+
                   event: done
                   data: [DONE]
         "400":

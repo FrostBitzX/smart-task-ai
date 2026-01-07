@@ -29,20 +29,8 @@ func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAcco
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Set pagination defaults
-	var limit int
-	var offset int
-	if req.Limit == nil {
-		limit = 10
-	} else {
-		limit = *req.Limit
-	}
-
-	if req.Offset == nil {
-		offset = 0
-	} else {
-		offset = *req.Offset
-	}
+	// Set pagination
+	limit, offset := common.ValidatePagination(req.Limit, req.Offset)
 
 	// Get accounts from service
 	accounts, total, err := uc.accountService.ListAccounts(ctx, limit, offset)
@@ -62,7 +50,7 @@ func (uc *ListAccountUseCase) Execute(ctx context.Context, req *account.ListAcco
 	}
 
 	// Calculate pagination info
-	hasMore := offset+limit < total
+	hasMore := common.CalculateHasMore(offset, limit, total)
 
 	// Build response
 	response := &account.ListAccountsResponse{
