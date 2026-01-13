@@ -30,6 +30,12 @@ const (
 // Pre-compiled regex for extracting JSON from markdown code blocks
 var codeBlockRegex = regexp.MustCompile("```(?:json)?\\s*([\\s\\S]*?)```")
 
+// ActionRequest represents a parsed action request from AI response
+type ActionRequest struct {
+	Action string          `json:"action"`
+	Params json.RawMessage `json:"params"`
+}
+
 // ChatService defines the interface for chat operations
 type ChatService interface {
 	SendMessage(ctx context.Context, req *SendMessageRequest) (*SendMessageResponse, error)
@@ -142,39 +148,47 @@ func (s *chatService) SendMessage(ctx context.Context, req *SendMessageRequest) 
 	}, nil
 }
 
-// ActionRequest represents a parsed action from AI response
-type ActionRequest struct {
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
+// TaskListResponse represents the JSON response from AI with task_list type
+type TaskListResponse struct {
+	Type  string       `json:"type"`
+	Meta  string       `json:"meta"`
+	Tasks []TaskFromAI `json:"tasks"`
 }
 
-// parseActionFromResponse tries to parse an action request from AI response
-func (s *chatService) parseActionFromResponse(response string) *ActionRequest {
+// TaskFromAI represents a single task from AI response
+type TaskFromAI struct {
+	Name          string `json:"name"`
+	Priority      string `json:"priority"`
+	Status        string `json:"status"`
+	Description   string `json:"description,omitempty"`
+	StartDateTime string `json:"start_datetime,omitempty"`
+	EndDateTime   string `json:"end_datetime,omitempty"`
+}
+
+// parseTaskListResponse tries to parse a task_list response from AI
+func (s *chatService) parseTaskListResponse(response string) *TaskListResponse {
 	// Try to extract JSON from the response
 	jsonStr := extractJSON(response)
 	if jsonStr == "" {
 		return nil
 	}
 
-	var actionReq ActionRequest
-	if err := json.Unmarshal([]byte(jsonStr), &actionReq); err != nil {
+	var taskListResp TaskListResponse
+	if err := json.Unmarshal([]byte(jsonStr), &taskListResp); err != nil {
 		return nil
 	}
 
-	// Validate action name
-	validActions := map[string]bool{
-		"create_task": true,
-		"update_task": true,
-		"delete_task": true,
-		"get_task":    true,
-		"list_tasks":  true,
-	}
-
-	if !validActions[actionReq.Action] {
+	// Validate response type
+	if taskListResp.Type != "task_list" {
 		return nil
 	}
 
-	return &actionReq
+	// Validate tasks exist
+	if len(taskListResp.Tasks) == 0 {
+		return nil
+	}
+
+	return &taskListResp
 }
 
 // extractJSON extracts JSON object from a string (handles markdown code blocks)
@@ -193,10 +207,34 @@ func extractJSON(s string) string {
 		return ""
 	}
 
-	// Find matching closing brace
+	// Find matching closing brace, accounting for strings
 	depth := 0
+	inString := false
+	escaped := false
+
 	for i := start; i < len(s); i++ {
-		switch s[i] {
+		c := s[i]
+
+		if escaped {
+			escaped = false
+			continue
+		}
+
+		if c == '\\' && inString {
+			escaped = true
+			continue
+		}
+
+		if c == '"' {
+			inString = !inString
+			continue
+		}
+
+		if inString {
+			continue
+		}
+
+		switch c {
 		case '{':
 			depth++
 		case '}':
@@ -208,6 +246,27 @@ func extractJSON(s string) string {
 	}
 
 	return ""
+}
+
+// parseActionFromResponse parses an action request from AI response
+func (s *chatService) parseActionFromResponse(response string) *ActionRequest {
+	jsonStr := extractJSON(response)
+	if jsonStr == "" {
+		return nil
+	}
+
+	// Try to parse as ActionRequest
+	var actionReq ActionRequest
+	if err := json.Unmarshal([]byte(jsonStr), &actionReq); err != nil {
+		return nil
+	}
+
+	// Validate that action is present
+	if actionReq.Action == "" {
+		return nil
+	}
+
+	return &actionReq
 }
 
 // generateActionResponse generates a human-readable response for an action result

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/chat"
 	chatSvc "github.com/FrostBitzX/smart-task-ai/internal/domain/chats/service"
@@ -41,7 +42,7 @@ func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, req
 	}
 
 	return &chat.SendMessageResponseDTO{
-		Message:     resp.Message,
+		Message:     toJSONMessage(resp.Message),
 		TaskActions: convertTaskActions(resp.TaskActions),
 	}, nil
 }
@@ -111,4 +112,16 @@ func convertTaskActions(actions []chatSvc.TaskAction) []chat.TaskActionDTO {
 		}
 	}
 	return dtos
+}
+
+// toJSONMessage converts a message string to json.RawMessage
+// If the message is valid JSON, it returns it as-is; otherwise wraps it as a JSON string
+func toJSONMessage(msg string) json.RawMessage {
+	// Check if the message is valid JSON
+	if json.Valid([]byte(msg)) {
+		return json.RawMessage(msg)
+	}
+	// Wrap as JSON string
+	b, _ := json.Marshal(msg)
+	return b
 }

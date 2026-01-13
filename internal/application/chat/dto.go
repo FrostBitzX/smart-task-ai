@@ -1,5 +1,7 @@
 package chat
 
+import "encoding/json"
+
 // SendMessageRequestDTO represents the request to send a message to the AI assistant
 type SendMessageRequestDTO struct {
 	ProjectID      string       `json:"project_id,omitempty"` // Set from URL parameter
@@ -15,7 +17,7 @@ type MessageDTO struct {
 
 // SendMessageResponseDTO represents the response from the AI assistant
 type SendMessageResponseDTO struct {
-	Message     string          `json:"message"`
+	Message     json.RawMessage `json:"message"`
 	TaskActions []TaskActionDTO `json:"task_actions,omitempty"`
 }
 
