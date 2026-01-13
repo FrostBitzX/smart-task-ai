@@ -110,15 +110,34 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 		return nil, err
 	}
 
-	// Update fields
-	tsk.Name = req.Name
-	tsk.Description = req.Description
-	tsk.Priority = req.Priority
-	tsk.Location = req.Location
-	tsk.RecurringDays = req.RecurringDays
-	tsk.RecurringUntil = req.RecurringUntil
-	tsk.StartDateTime = req.StartDateTime
-	tsk.EndDateTime = req.EndDateTime
+	// Update fields only if provided (PATCH semantics)
+	if req.Name != "" {
+		tsk.Name = req.Name
+	}
+	if req.Status != nil {
+		tsk.Status = *req.Status
+	}
+	if req.Description != nil {
+		tsk.Description = req.Description
+	}
+	if req.Priority != "" {
+		tsk.Priority = req.Priority
+	}
+	if req.Location != nil {
+		tsk.Location = req.Location
+	}
+	if req.RecurringDays != nil {
+		tsk.RecurringDays = req.RecurringDays
+	}
+	if req.RecurringUntil != nil {
+		tsk.RecurringUntil = req.RecurringUntil
+	}
+	if req.StartDateTime != nil {
+		tsk.StartDateTime = req.StartDateTime
+	}
+	if req.EndDateTime != nil {
+		tsk.EndDateTime = req.EndDateTime
+	}
 	tsk.UpdatedAt = time.Now()
 
 	err = s.repo.UpdateTask(ctx, tsk)

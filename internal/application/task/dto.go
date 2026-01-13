@@ -51,9 +51,10 @@ type ListTasksByProjectResponse struct {
 }
 
 type UpdateTaskRequest struct {
-	Name           string  `json:"name" validate:"required"`
+	Name           string  `json:"name"`
+	Status         *string `json:"status"`
 	Description    *string `json:"description"`
-	Priority       string  `json:"priority" validate:"required"`
+	Priority       string  `json:"priority"`
 	StartDateTime  *string `json:"start_datetime"`
 	EndDateTime    *string `json:"end_datetime"`
 	Location       *string `json:"location"`
