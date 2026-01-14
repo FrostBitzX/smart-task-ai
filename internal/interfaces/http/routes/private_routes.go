@@ -62,7 +62,7 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	api.Delete("/projects/:projectId", projectHandlerInstance.DeleteProject)
 
 	// Task setup
-	taskService := taskDomain.NewTaskService(taskRepository)
+	taskService := taskDomain.NewTaskService(taskRepository, projectRepository)
 	createTaskUC := taskUC.NewCreateTaskUseCase(taskService, log)
 	getTaskByIDUC := taskUC.NewGetTaskByIDUseCase(taskService, log)
 	listTasksByProjectUC := taskUC.NewListTasksByProjectUseCase(taskService, log)

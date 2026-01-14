@@ -9,21 +9,35 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
 	"github.com/google/uuid"
 
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 )
 
 type TaskService struct {
-	repo tasks.TaskRepository
+	repo        tasks.TaskRepository
+	projectRepo projects.ProjectRepository
 }
 
-func NewTaskService(repo tasks.TaskRepository) *TaskService {
-	return &TaskService{repo: repo}
+func NewTaskService(repo tasks.TaskRepository, projectRepo projects.ProjectRepository) *TaskService {
+	return &TaskService{
+		repo:        repo,
+		projectRepo: projectRepo,
+	}
 }
 
 func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *task.CreateTaskRequest) (*entity.Task, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
+	}
+
+	// Validate that project exists
+	_, err := s.projectRepo.GetProjectByID(ctx, projectID)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
+		}
+		return nil, apperror.NewInternalServerError("failed to validate project", "VALIDATE_PROJECT_ERROR", err)
 	}
 
 	if err := s.validateTimeRange(req.StartDateTime, req.EndDateTime); err != nil {
@@ -61,7 +75,7 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	}
 
 	// persist account to database
-	err := s.repo.CreateTask(ctx, task)
+	err = s.repo.CreateTask(ctx, task)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to create task", "CREATE_TASK_ERROR", err)
 	}

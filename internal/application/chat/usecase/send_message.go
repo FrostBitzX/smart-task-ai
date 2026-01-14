@@ -2,12 +2,10 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/chat"
 	chatSvc "github.com/FrostBitzX/smart-task-ai/internal/domain/chats/service"
 	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
-	taskEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/groq"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
@@ -42,19 +40,10 @@ func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, req
 	}
 
 	return &chat.SendMessageResponseDTO{
-		Message:     toJSONMessage(resp.Message),
-		TaskActions: convertTaskActions(resp.TaskActions),
+		Type:    resp.Type,
+		Message: resp.Message,
+		Tasks:   mapTasksToDTO(resp.Tasks),
 	}, nil
-}
-
-// ExecuteStream sends a message to the AI assistant and returns a streaming response
-func (uc *SendMessageUseCase) ExecuteStream(ctx context.Context, accountID string, req *chat.SendMessageRequestDTO) (<-chan groq.StreamChunk, error) {
-	serviceReq, err := uc.buildServiceRequest(accountID, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return uc.chatService.SendMessageStream(ctx, serviceReq)
 }
 
 // buildServiceRequest validates and converts DTO to service request
@@ -97,31 +86,34 @@ func convertSessionHistory(history []chat.MessageDTO) []groq.ChatMessage {
 	return messages
 }
 
-// convertTaskActions converts domain task actions to DTOs
-func convertTaskActions(actions []chatSvc.TaskAction) []chat.TaskActionDTO {
-	if len(actions) == 0 {
+// mapTasksToDTO converts domain tasks to DTOs
+func mapTasksToDTO(tasks []chatSvc.TaskFromAI) []chat.TaskDTO {
+	if tasks == nil {
 		return nil
 	}
 
-	dtos := make([]chat.TaskActionDTO, len(actions))
-	for i, action := range actions {
-		dtos[i] = chat.TaskActionDTO{
-			Type:   action.Type,
-			TaskID: utils.ShortUUIDWithPrefix(action.TaskID, taskEntity.TaskIDPrefix),
-			Name:   action.Name,
+	dtos := make([]chat.TaskDTO, len(tasks))
+	for i, t := range tasks {
+		dtos[i] = chat.TaskDTO{
+			Name:        t.Name,
+			Description: t.Description,
+			Priority:    t.Priority,
+		}
+		if t.StartDateTime != "" {
+			dtos[i].StartDatetime = &t.StartDateTime
+		}
+		if t.EndDateTime != "" {
+			dtos[i].EndDatetime = &t.EndDateTime
+		}
+		if t.Location != "" {
+			dtos[i].Location = &t.Location
+		}
+		if t.RecurringDays > 0 {
+			dtos[i].RecurringDays = &t.RecurringDays
+		}
+		if t.RecurringUntil != "" {
+			dtos[i].RecurringUntil = &t.RecurringUntil
 		}
 	}
 	return dtos
-}
-
-// toJSONMessage converts a message string to json.RawMessage
-// If the message is valid JSON, it returns it as-is; otherwise wraps it as a JSON string
-func toJSONMessage(msg string) json.RawMessage {
-	// Check if the message is valid JSON
-	if json.Valid([]byte(msg)) {
-		return json.RawMessage(msg)
-	}
-	// Wrap as JSON string
-	b, _ := json.Marshal(msg)
-	return b
 }

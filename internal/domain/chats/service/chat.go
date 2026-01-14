@@ -30,16 +30,9 @@ const (
 // Pre-compiled regex for extracting JSON from markdown code blocks
 var codeBlockRegex = regexp.MustCompile("```(?:json)?\\s*([\\s\\S]*?)```")
 
-// ActionRequest represents a parsed action request from AI response
-type ActionRequest struct {
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
-}
-
 // ChatService defines the interface for chat operations
 type ChatService interface {
 	SendMessage(ctx context.Context, req *SendMessageRequest) (*SendMessageResponse, error)
-	SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan groq.StreamChunk, error)
 }
 
 // SendMessageRequest represents a request to send a message
@@ -52,24 +45,17 @@ type SendMessageRequest struct {
 
 // SendMessageResponse represents the response from sending a message
 type SendMessageResponse struct {
-	Message     string
-	TaskActions []TaskAction
-}
-
-// TaskAction represents an action performed on a task
-type TaskAction struct {
-	Type   string
-	TaskID uuid.UUID
-	Name   string
+	Type    string
+	Message string
+	Tasks   []TaskFromAI
 }
 
 // chatService implements the ChatService interface
 type chatService struct {
-	groqClient       groq.GroqClient
-	taskService      *taskSvc.TaskService
-	projectService   *projectSvc.ProjectService
-	promptBuilder    PromptBuilder
-	functionExecutor *FunctionExecutor
+	groqClient     groq.GroqClient
+	taskService    *taskSvc.TaskService
+	projectService *projectSvc.ProjectService
+	promptBuilder  PromptBuilder
 }
 
 // NewChatService creates a new chat service
@@ -79,11 +65,10 @@ func NewChatService(
 	projectService *projectSvc.ProjectService,
 ) ChatService {
 	return &chatService{
-		groqClient:       groqClient,
-		taskService:      taskService,
-		projectService:   projectService,
-		promptBuilder:    NewPromptBuilder(),
-		functionExecutor: NewFunctionExecutor(taskService),
+		groqClient:     groqClient,
+		taskService:    taskService,
+		projectService: projectService,
+		promptBuilder:  NewPromptBuilder(),
 	}
 }
 
@@ -119,76 +104,69 @@ func (s *chatService) SendMessage(ctx context.Context, req *SendMessageRequest) 
 
 	aiResponse := resp.Choices[0].Message.Content
 
-	// Try to parse AI response as a function call
-	actionRequest := s.parseActionFromResponse(aiResponse)
-	if actionRequest != nil {
-		// Execute the function call
-		result := s.functionExecutor.ExecuteFunction(ctx, req.ProjectID, &FunctionCall{
-			Name:      actionRequest.Action,
-			Arguments: actionRequest.Params,
-		})
-
-		var taskActions []TaskAction
-		if result.Action != nil {
-			taskActions = append(taskActions, *result.Action)
-		}
-
-		// Generate a human-readable response based on the result
-		responseMessage := s.generateActionResponse(actionRequest.Action, result)
-
-		return &SendMessageResponse{
-			Message:     responseMessage,
-			TaskActions: taskActions,
-		}, nil
+	// Try to parse as structured JSON response from AI
+	structuredResp := s.parseStructuredResponse(aiResponse)
+	if structuredResp != nil {
+		return structuredResp, nil
 	}
 
 	return &SendMessageResponse{
-		Message:     aiResponse,
-		TaskActions: []TaskAction{},
+		Type:    "text",
+		Message: aiResponse,
+		Tasks:   nil,
 	}, nil
 }
 
-// TaskListResponse represents the JSON response from AI with task_list type
+// TaskListResponse represents the JSON response from AI with task_actions type
 type TaskListResponse struct {
-	Type  string       `json:"type"`
-	Meta  string       `json:"meta"`
-	Tasks []TaskFromAI `json:"tasks"`
+	Type    string       `json:"type"`
+	Message string       `json:"message"`
+	Tasks   []TaskFromAI `json:"tasks"`
 }
 
 // TaskFromAI represents a single task from AI response
 type TaskFromAI struct {
-	Name          string `json:"name"`
-	Priority      string `json:"priority"`
-	Status        string `json:"status"`
-	Description   string `json:"description,omitempty"`
-	StartDateTime string `json:"start_datetime,omitempty"`
-	EndDateTime   string `json:"end_datetime,omitempty"`
+	ID             string `json:"id,omitempty"`
+	Name           string `json:"name"`
+	Description    string `json:"description,omitempty"`
+	Priority       string `json:"priority"`
+	Status         string `json:"status"`
+	StartDateTime  string `json:"start_datetime,omitempty"`
+	EndDateTime    string `json:"end_datetime,omitempty"`
+	Location       string `json:"location,omitempty"`
+	RecurringDays  int    `json:"recurring_days,omitempty"`
+	RecurringUntil string `json:"recurring_until,omitempty"`
 }
 
-// parseTaskListResponse tries to parse a task_list response from AI
-func (s *chatService) parseTaskListResponse(response string) *TaskListResponse {
+// parseStructuredResponse tries to parse any structured JSON response from AI
+func (s *chatService) parseStructuredResponse(response string) *SendMessageResponse {
 	// Try to extract JSON from the response
 	jsonStr := extractJSON(response)
 	if jsonStr == "" {
 		return nil
 	}
 
+	// Try to parse as TaskListResponse (supports "message" fields)
 	var taskListResp TaskListResponse
 	if err := json.Unmarshal([]byte(jsonStr), &taskListResp); err != nil {
 		return nil
 	}
 
-	// Validate response type
-	if taskListResp.Type != "task_list" {
+	// Must have a type field
+	if taskListResp.Type == "" {
 		return nil
 	}
 
-	// Validate tasks exist
-	if len(taskListResp.Tasks) == 0 {
+	// Must have a message
+	if taskListResp.Message == "" {
 		return nil
 	}
 
-	return &taskListResp
+	return &SendMessageResponse{
+		Type:    taskListResp.Type,
+		Message: taskListResp.Message,
+		Tasks:   taskListResp.Tasks,
+	}
 }
 
 // extractJSON extracts JSON object from a string (handles markdown code blocks)
@@ -246,126 +224,6 @@ func extractJSON(s string) string {
 	}
 
 	return ""
-}
-
-// parseActionFromResponse parses an action request from AI response
-func (s *chatService) parseActionFromResponse(response string) *ActionRequest {
-	jsonStr := extractJSON(response)
-	if jsonStr == "" {
-		return nil
-	}
-
-	// Try to parse as ActionRequest
-	var actionReq ActionRequest
-	if err := json.Unmarshal([]byte(jsonStr), &actionReq); err != nil {
-		return nil
-	}
-
-	// Validate that action is present
-	if actionReq.Action == "" {
-		return nil
-	}
-
-	return &actionReq
-}
-
-// generateActionResponse generates a human-readable response for an action result
-func (s *chatService) generateActionResponse(action string, result *FunctionResult) string {
-	if !result.Success {
-		return "ขออภัย ไม่สามารถดำเนินการได้: " + result.Error
-	}
-
-	switch action {
-	case "create_task":
-		if data, ok := result.Data.(map[string]interface{}); ok {
-			name := data["name"]
-			return "สร้าง task \"" + name.(string) + "\" เรียบร้อยแล้ว ✅"
-		}
-	case "update_task":
-		if data, ok := result.Data.(map[string]interface{}); ok {
-			name := data["name"]
-			return "อัพเดท task \"" + name.(string) + "\" เรียบร้อยแล้ว ✅"
-		}
-	case "delete_task":
-		return "ลบ task เรียบร้อยแล้ว ✅"
-	case "get_task":
-		if data, ok := result.Data.(map[string]interface{}); ok {
-			return formatTaskDetails(data)
-		}
-	case "list_tasks":
-		if data, ok := result.Data.(map[string]interface{}); ok {
-			return formatTaskList(data)
-		}
-	}
-
-	return "ดำเนินการเรียบร้อยแล้ว ✅"
-}
-
-func formatTaskDetails(data map[string]interface{}) string {
-	var sb strings.Builder
-	sb.WriteString("📋 รายละเอียด Task:\n")
-	sb.WriteString("- ชื่อ: " + data["name"].(string) + "\n")
-	sb.WriteString("- สถานะ: " + data["status"].(string) + "\n")
-	sb.WriteString("- Priority: " + data["priority"].(string) + "\n")
-	if desc, ok := data["description"]; ok {
-		sb.WriteString("- รายละเอียด: " + desc.(string) + "\n")
-	}
-	if start, ok := data["start_datetime"]; ok {
-		sb.WriteString("- เริ่ม: " + start.(string) + "\n")
-	}
-	if end, ok := data["end_datetime"]; ok {
-		sb.WriteString("- สิ้นสุด: " + end.(string) + "\n")
-	}
-	return sb.String()
-}
-
-func formatTaskList(data map[string]interface{}) string {
-	tasks, ok := data["tasks"].([]map[string]interface{})
-	if !ok {
-		return "ไม่พบ tasks"
-	}
-
-	if len(tasks) == 0 {
-		return "📋 ไม่มี task ใน project นี้"
-	}
-
-	var sb strings.Builder
-	sb.WriteString("📋 รายการ Tasks:\n")
-	for i, t := range tasks {
-		name := t["name"].(string)
-		status := t["status"].(string)
-		priority := t["priority"].(string)
-		sb.WriteString(strings.Repeat("-", 30) + "\n")
-		sb.WriteString(strings.Repeat(" ", 2) + string(rune('1'+i)) + ". " + name + "\n")
-		sb.WriteString("     สถานะ: " + status + " | Priority: " + priority + "\n")
-	}
-	return sb.String()
-}
-
-// SendMessageStream sends a message to the AI and returns a streaming response
-func (s *chatService) SendMessageStream(ctx context.Context, req *SendMessageRequest) (<-chan groq.StreamChunk, error) {
-	if err := s.validateRequest(req); err != nil {
-		return nil, err
-	}
-
-	project, err := s.projectService.GetProjectByID(ctx, req.ProjectID)
-	if err != nil {
-		return nil, s.handleProjectError(err)
-	}
-
-	tasks, err := s.taskService.ListTasksByProject(ctx, req.ProjectID)
-	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get tasks", "GET_TASKS_ERROR", err)
-	}
-
-	aiConfig := s.getAIConfig(project)
-	systemPrompt := s.promptBuilder.BuildSystemPrompt(aiConfig, tasks)
-	messages := s.buildMessages(systemPrompt, req.SessionHistory, req.Content)
-
-	groqReq := groq.NewDefaultRequest(messages)
-	groqReq.Stream = true
-
-	return s.groqClient.SendChatCompletionStream(ctx, groqReq)
 }
 
 func (s *chatService) validateRequest(req *SendMessageRequest) error {

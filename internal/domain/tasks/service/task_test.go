@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
+	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/mocks"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
@@ -21,7 +22,8 @@ func TestTaskService_CreateTask(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewTaskService(mockRepo)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	projectID := uuid.New()
 
@@ -52,6 +54,10 @@ func TestTaskService_CreateTask(t *testing.T) {
 				Location:      strPtr("Office"),
 			},
 			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
 				mockRepo.EXPECT().
 					CreateTask(ctx, gomock.Any()).
 					DoAndReturn(func(_ context.Context, tsk *entity.Task) error {
@@ -77,6 +83,10 @@ func TestTaskService_CreateTask(t *testing.T) {
 				Priority: "2",
 			},
 			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
 				mockRepo.EXPECT().
 					CreateTask(ctx, gomock.Any()).
 					Return(nil).
@@ -98,6 +108,40 @@ func TestTaskService_CreateTask(t *testing.T) {
 			validate:      nil,
 		},
 		{
+			name:      "error - project not found",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:     "Test Task",
+				Priority: "1",
+			},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(nil, apperror.ErrRecordNotFound).
+					Times(1)
+			},
+			expectedError: "project not found",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
+			name:      "error - project validation fails",
+			projectID: projectID,
+			request: &task.CreateTaskRequest{
+				Name:     "Test Task",
+				Priority: "1",
+			},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(nil, errors.New("database error")).
+					Times(1)
+			},
+			expectedError: "failed to validate project",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
 			name:      "error - same start and end time",
 			projectID: projectID,
 			request: &task.CreateTaskRequest{
@@ -105,7 +149,12 @@ func TestTaskService_CreateTask(t *testing.T) {
 				StartDateTime: &sameTime,
 				EndDateTime:   &sameTime,
 			},
-			setupMock:     func() {},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
+			},
 			expectedError: "cannot be the same",
 			expectNil:     true,
 			validate:      nil,
@@ -118,7 +167,12 @@ func TestTaskService_CreateTask(t *testing.T) {
 				StartDateTime: &endTime,   // Later time as start
 				EndDateTime:   &startTime, // Earlier time as end
 			},
-			setupMock:     func() {},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
+			},
 			expectedError: "end_datetime must be greater than start_datetime",
 			expectNil:     true,
 			validate:      nil,
@@ -131,7 +185,12 @@ func TestTaskService_CreateTask(t *testing.T) {
 				StartDateTime: strPtr("invalid-date"),
 				EndDateTime:   &endTime,
 			},
-			setupMock:     func() {},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
+			},
 			expectedError: "invalid start_datetime format",
 			expectNil:     true,
 			validate:      nil,
@@ -144,7 +203,12 @@ func TestTaskService_CreateTask(t *testing.T) {
 				StartDateTime: &startTime,
 				EndDateTime:   strPtr("invalid-date"),
 			},
-			setupMock:     func() {},
+			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
+			},
 			expectedError: "invalid end_datetime format",
 			expectNil:     true,
 			validate:      nil,
@@ -156,6 +220,10 @@ func TestTaskService_CreateTask(t *testing.T) {
 				Name: "Test Task",
 			},
 			setupMock: func() {
+				mockProjectRepo.EXPECT().
+					GetProjectByID(ctx, projectID).
+					Return(&projectEntity.Project{ID: projectID}, nil).
+					Times(1)
 				mockRepo.EXPECT().
 					CreateTask(ctx, gomock.Any()).
 					Return(errors.New("database error")).
@@ -197,7 +265,8 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewTaskService(mockRepo)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
 
@@ -279,7 +348,8 @@ func TestTaskService_UpdateTask(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewTaskService(mockRepo)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
 
@@ -430,7 +500,8 @@ func TestTaskService_DeleteTask(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewTaskService(mockRepo)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
 
@@ -515,7 +586,8 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewTaskService(mockRepo)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	projectID := uuid.New()
 

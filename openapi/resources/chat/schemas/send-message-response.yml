@@ -1,11 +1,25 @@
 type: object
+required:
+  - type
+  - message
 properties:
+  type:
+    type: string
+    enum:
+      - text
+      - task_actions
+    description: |
+      Type of response from the AI assistant:
+      - text: Simple text response for normal conversation
+      - task_actions: Response with suggested tasks to create
+    example: "task_actions"
   message:
     type: string
     description: The AI assistant's response message
-    example: "สร้าง task \"ประชุมทีม\" เรียบร้อยแล้ว ✅"
-  task_actions:
+    example: "ฉันได้สร้างรายการ tasks ตามที่คุณขอแล้วค่ะ"
+  tasks:
     type: array
-    description: List of task actions performed by the AI
+    nullable: true
+    description: List of tasks suggested by the AI (null when type is "text")
     items:
-      $ref: "./task-action-response.yml"
+      $ref: "./task.yml"

@@ -7,25 +7,61 @@ Rules:
 
 Behavior:
 - If user intent is NOT task-related:
-  - meta = normal conversation text
+  - type = "text"
+  - message = normal conversation text
   - tasks = null
 - If user intent is task-related:
-  - meta = short summary text for display
+  - type = "task_actions"
+  - message = short summary text for display
   - tasks = array of generated tasks
 
 Schema (must match exactly):
 {
-  "type": "task_list",
-  "meta": "<display text, talk normally with user question>",
+  "type": "text|task_actions",
+  "message": "<display text, talk normally with user question>",
   "tasks": [
     {
       "name": "<string>",
-      "priority": "low|medium|high",
-      "status": "todo|in_progress|review|done",
       "description": "<string>",
-      "start_datetime": "<RFC3339>",
-      "end_datetime": "<RFC3339>"
+      "priority": "low|medium|high",
+      "start_datetime": "<RFC3339 with timezone, e.g. 2024-01-15T09:00:00Z or 2026-01-14T09:00:00+07:00>",
+      "end_datetime": "<RFC3339 with timezone>",
+      "location": "<string, optional>",
+      "recurring_days": <integer, optional, days between recurring>,
+      "recurring_until": "<RFC3339 with timezone, optional, end date for recurring>"
     }
   ] | null
 }
 
+Examples:
+- Normal conversation (type = "text"):
+{
+  "type": "text",
+  "message": "ผมชื่อ ChatGPT ครับ ยินดีที่ได้รู้จัก! มีอะไรให้ช่วยเหลือบ้างไหม",
+  "tasks": null
+}
+
+- Task creation (type = "task_actions"):
+{
+  "type": "task_actions",
+  "message": "นี่คือรายการงานที่ควรทำสำหรับการสร้างแอป To-Do List",
+  "tasks": [
+    {
+      "name": "task 1",
+      "description": "description for task 1",
+      "priority": "high",
+      "start_datetime": "2024-01-15T09:00:00Z",
+      "end_datetime": "2024-01-15T10:00:00Z",
+      "location": "Kasetsart University",
+      "recurring_days": 7,
+      "recurring_until": "2024-02-15T10:00:00Z"
+    },
+    {
+      "name": "task 2",
+      "description": "description for task 2",
+      "priority": "high",
+      "start_datetime": "2026-01-14T09:00:00+07:00",
+      "end_datetime": "2026-01-16T18:00:00+07:00"
+    }
+  ]
+}

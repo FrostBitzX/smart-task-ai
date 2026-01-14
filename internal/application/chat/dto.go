@@ -1,7 +1,5 @@
 package chat
 
-import "encoding/json"
-
 // SendMessageRequestDTO represents the request to send a message to the AI assistant
 type SendMessageRequestDTO struct {
 	ProjectID      string       `json:"project_id,omitempty"` // Set from URL parameter
@@ -17,13 +15,19 @@ type MessageDTO struct {
 
 // SendMessageResponseDTO represents the response from the AI assistant
 type SendMessageResponseDTO struct {
-	Message     json.RawMessage `json:"message"`
-	TaskActions []TaskActionDTO `json:"task_actions,omitempty"`
+	Type    string    `json:"type"`    // "text" or "task_actions"
+	Message string    `json:"message"` // AI response message
+	Tasks   []TaskDTO `json:"tasks"`   // List of tasks (null when type is "text")
 }
 
-// TaskActionDTO represents an action performed on a task
-type TaskActionDTO struct {
-	Type   string `json:"type"`
-	TaskID string `json:"task_id"`
-	Name   string `json:"name"`
+// TaskDTO represents a task in the chat response
+type TaskDTO struct {
+	Name           string  `json:"name"`
+	Description    string  `json:"description,omitempty"`
+	Priority       string  `json:"priority,omitempty"`
+	StartDatetime  *string `json:"start_datetime,omitempty"`
+	EndDatetime    *string `json:"end_datetime,omitempty"`
+	Location       *string `json:"location,omitempty"`
+	RecurringDays  *int    `json:"recurring_days,omitempty"`
+	RecurringUntil *string `json:"recurring_until,omitempty"`
 }
