@@ -11,5 +11,6 @@ type AccountRepository interface {
 	CreateAccount(ctx context.Context, acc *entity.Account) error
 	ExistsAccount(ctx context.Context, username, email string) (bool, error)
 	GetByUsername(ctx context.Context, username string) (*entity.Account, error)
+	GetAccount(ctx context.Context, id string) (*entity.Account, error)
 	ListAccounts(ctx context.Context, limit, offset int) ([]*entity.Account, int, error)
 }

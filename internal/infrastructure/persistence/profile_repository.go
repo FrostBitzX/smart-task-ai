@@ -20,7 +20,7 @@ func (r *profileRepository) CreateProfile(ctx context.Context, prof *entity.Prof
 	return r.db.WithContext(ctx).Create(prof).Error
 }
 
-func (r *profileRepository) GetProfileByAccountID(ctx context.Context, accountID string) (*entity.Profile, error) {
+func (r *profileRepository) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
 	var profile entity.Profile
 	err := r.db.WithContext(ctx).
 		Select("id, account_id, first_name, last_name, nickname, avatar_path, state, created_at, updated_at").

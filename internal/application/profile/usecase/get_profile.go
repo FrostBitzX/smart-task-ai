@@ -28,9 +28,12 @@ func (uc *GetProfileUseCase) Execute(ctx context.Context, req *profile.GetProfil
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	prof, err := uc.profileService.GetProfileByAccountID(ctx, req.AccountID)
+	prof, err := uc.profileService.CheckAndGetProfile(ctx, req.AccountID)
 	if err != nil {
 		return nil, err
+	}
+	if prof == nil {
+		return nil, apperror.NewNotFoundError("profile not found", "PROFILE_NOT_FOUND", nil)
 	}
 
 	// Convert UUID to string with prefix

@@ -18,7 +18,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "missing token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "MISSING_TOKEN",
 				},
 			})
@@ -32,7 +32,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token format",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN_FORMAT",
 				},
 			})
@@ -49,7 +49,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN",
 				},
 			})
@@ -62,7 +62,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token claims",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN_CLAIMS",
 				},
 			})
@@ -79,7 +79,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "missing account id in token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "MISSING_ACCOUNT_ID",
 				},
 			})

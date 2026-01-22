@@ -39,7 +39,7 @@ func FromProfileModel(p *entity.Profile) *Profile {
 		AccountID:  p.AccountID.String(),
 		FirstName:  p.FirstName,
 		LastName:   p.LastName,
-		Nickname:   p.Nickname,
+		Nickname:   lo.FromPtr(p.Nickname),
 		AvatarPath: lo.FromPtr(p.AvatarPath),
 		State:      State{Active: p.State, Inactive: p.State},
 		CreatedAt:  p.CreatedAt,

@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/profile"
-	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
+	accountEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/accounts/entity"
+	entity "github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,8 @@ func TestProfileService_CreateProfile(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockProfileRepository(ctrl)
-	svc := NewProfileService(mockRepo)
+	mockAccountRepo := mocks.NewMockAccountRepository(ctrl)
+	svc := NewProfileService(mockRepo, mockAccountRepo)
 	ctx := context.Background()
 	accountID := uuid.New().String()
 
@@ -37,20 +39,25 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				AccountID:  accountID,
 				FirstName:  "John",
 				LastName:   "Doe",
-				Nickname:   "johnd",
+				Nickname:   strPtr("johnd"),
 				AvatarPath: strPtr("/avatars/john.png"),
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
 					CreateProfile(ctx, gomock.Any()).
 					DoAndReturn(func(_ context.Context, prof *entity.Profile) error {
 						assert.Equal(t, "John", prof.FirstName)
 						assert.Equal(t, "Doe", prof.LastName)
-						assert.Equal(t, "johnd", prof.Nickname)
+						assert.NotNil(t, prof.Nickname)
+						assert.Equal(t, "johnd", *prof.Nickname)
 						assert.NotNil(t, prof.AvatarPath)
 						assert.Equal(t, "/avatars/john.png", *prof.AvatarPath)
 						assert.Equal(t, "active", prof.State)
@@ -68,9 +75,13 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				FirstName: "Jane",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
 					CreateProfile(ctx, gomock.Any()).
@@ -94,12 +105,16 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				FirstName: "John",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				existingProfile := &entity.Profile{
 					ID:        uuid.New(),
 					AccountID: uuid.MustParse(accountID),
 				}
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(existingProfile, nil).
 					Times(1)
 			},
@@ -113,12 +128,17 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				FirstName: "John",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
+				// The implementation calls CheckAndGetProfile which fails
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
-			expectedError: "failed to get profile by account id",
+			expectedError: "failed to check and get profile",
 			expectNil:     true,
 		},
 		{
@@ -128,9 +148,13 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				FirstName: "John",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
 					CreateProfile(ctx, gomock.Any()).
@@ -147,9 +171,13 @@ func TestProfileService_CreateProfile(t *testing.T) {
 				FirstName: "John",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
 					CreateProfile(ctx, gomock.Any()).
@@ -191,7 +219,8 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockProfileRepository(ctrl)
-	svc := NewProfileService(mockRepo)
+	mockAccountRepo := mocks.NewMockAccountRepository(ctrl)
+	svc := NewProfileService(mockRepo, mockAccountRepo)
 	ctx := context.Background()
 	accountID := uuid.New().String()
 	profileID := uuid.New()
@@ -209,7 +238,7 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 				AccountID:  accountID,
 				FirstName:  "Updated",
 				LastName:   "Name",
-				Nickname:   "updated",
+				Nickname:   strPtr("updated"),
 				AvatarPath: strPtr("/new/avatar.png"),
 			},
 			setupMock: func() {
@@ -219,8 +248,12 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					FirstName: "Old",
 					LastName:  "Name",
 				}
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(existingProfile, nil).
 					Times(1)
 				mockRepo.EXPECT().
@@ -250,9 +283,13 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 				FirstName: "Updated",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 			},
 			expectedError: "profile not found",
@@ -265,12 +302,16 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 				FirstName: "Updated",
 			},
 			setupMock: func() {
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
-			expectedError: "failed to get profile by account id",
+			expectedError: "failed to check and get profile",
 			expectNil:     true,
 		},
 		{
@@ -284,8 +325,12 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					ID:        profileID,
 					AccountID: uuid.MustParse(accountID),
 				}
+				mockAccountRepo.EXPECT().
+					GetAccount(ctx, accountID).
+					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
+					Times(1)
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(existingProfile, nil).
 					Times(1)
 				mockRepo.EXPECT().
@@ -323,12 +368,13 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 	}
 }
 
-func TestProfileService_GetProfileByAccountID(t *testing.T) {
+func TestProfileService_CheckAndGetProfile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockRepo := mocks.NewMockProfileRepository(ctrl)
-	svc := NewProfileService(mockRepo)
+	mockAccountRepo := mocks.NewMockAccountRepository(ctrl)
+	svc := NewProfileService(mockRepo, mockAccountRepo)
 	ctx := context.Background()
 	accountID := uuid.New().String()
 
@@ -350,7 +396,7 @@ func TestProfileService_GetProfileByAccountID(t *testing.T) {
 					LastName:  "Doe",
 				}
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(prof, nil).
 					Times(1)
 			},
@@ -362,8 +408,8 @@ func TestProfileService_GetProfileByAccountID(t *testing.T) {
 			accountID: accountID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
-					Return(nil, nil).
+					CheckAndGetProfile(ctx, accountID).
+					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 			},
 			expectedError: "",
@@ -374,11 +420,11 @@ func TestProfileService_GetProfileByAccountID(t *testing.T) {
 			accountID: accountID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetProfileByAccountID(ctx, accountID).
+					CheckAndGetProfile(ctx, accountID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
-			expectedError: "failed to get profile by account id",
+			expectedError: "failed to check and get profile",
 			expectNil:     true,
 		},
 	}
@@ -387,7 +433,7 @@ func TestProfileService_GetProfileByAccountID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.GetProfileByAccountID(ctx, tt.accountID)
+			res, err := svc.CheckAndGetProfile(ctx, tt.accountID)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)

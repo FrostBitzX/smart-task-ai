@@ -61,3 +61,16 @@ func (r *accountRepository) ListAccounts(ctx context.Context, limit, offset int)
 
 	return accounts, int(total), err
 }
+
+func (r *accountRepository) GetAccount(ctx context.Context, id string) (*entity.Account, error) {
+	var account entity.Account
+	err := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&account).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}

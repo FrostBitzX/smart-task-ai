@@ -41,6 +41,21 @@ func (m *MockProfileRepository) EXPECT() *MockProfileRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CheckAndGetProfile mocks base method.
+func (m *MockProfileRepository) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckAndGetProfile", ctx, accountID)
+	ret0, _ := ret[0].(*entity.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckAndGetProfile indicates an expected call of CheckAndGetProfile.
+func (mr *MockProfileRepositoryMockRecorder) CheckAndGetProfile(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAndGetProfile", reflect.TypeOf((*MockProfileRepository)(nil).CheckAndGetProfile), ctx, accountID)
+}
+
 // CreateProfile mocks base method.
 func (m *MockProfileRepository) CreateProfile(ctx context.Context, prof *entity.Profile) error {
 	m.ctrl.T.Helper()
@@ -53,21 +68,6 @@ func (m *MockProfileRepository) CreateProfile(ctx context.Context, prof *entity.
 func (mr *MockProfileRepositoryMockRecorder) CreateProfile(ctx, prof any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileRepository)(nil).CreateProfile), ctx, prof)
-}
-
-// GetProfileByAccountID mocks base method.
-func (m *MockProfileRepository) GetProfileByAccountID(ctx context.Context, accountID string) (*entity.Profile, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProfileByAccountID", ctx, accountID)
-	ret0, _ := ret[0].(*entity.Profile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetProfileByAccountID indicates an expected call of GetProfileByAccountID.
-func (mr *MockProfileRepositoryMockRecorder) GetProfileByAccountID(ctx, accountID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByAccountID", reflect.TypeOf((*MockProfileRepository)(nil).GetProfileByAccountID), ctx, accountID)
 }
 
 // UpdateProfile mocks base method.

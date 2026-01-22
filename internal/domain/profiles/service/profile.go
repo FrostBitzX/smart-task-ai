@@ -11,22 +11,30 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/accounts"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/entity"
 )
 
 type ProfileService struct {
-	repo profiles.ProfileRepository
+	repo        profiles.ProfileRepository
+	accountRepo accounts.AccountRepository
 }
 
-func NewProfileService(repo profiles.ProfileRepository) *ProfileService {
-	return &ProfileService{repo: repo}
+func NewProfileService(repo profiles.ProfileRepository, accountRepo accounts.AccountRepository) *ProfileService {
+	return &ProfileService{
+		repo:        repo,
+		accountRepo: accountRepo,
+	}
 }
 
-func (s *ProfileService) GetProfileByAccountID(ctx context.Context, accountID string) (*entity.Profile, error) {
-	prof, err := s.repo.GetProfileByAccountID(ctx, accountID)
+func (s *ProfileService) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
+	prof, err := s.repo.CheckAndGetProfile(ctx, accountID)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get profile by account id", "GET_PROFILE_BY_ACCOUNT_ID_ERROR", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, apperror.NewInternalServerError("failed to check and get profile", "CHECK_AND_GET_PROFILE_ERROR", nil)
 	}
 
 	return prof, nil
@@ -37,10 +45,23 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Check if profile already created
-	exists, err := s.GetProfileByAccountID(ctx, req.AccountID)
+	// Check if account exists
+	_, err := s.accountRepo.GetAccount(ctx, req.AccountID)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get profile by account id", "GET_PROFILE_BY_ACCOUNT_ID_ERROR", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewBadRequestError(
+				"account ID does not exist",
+				"ACCOUNT_NOT_FOUND",
+				nil,
+			)
+		}
+		return nil, apperror.NewInternalServerError("failed to check account existence", "CHECK_ACCOUNT_ERROR", nil)
+	}
+
+	// Check if profile already exists
+	exists, err := s.CheckAndGetProfile(ctx, req.AccountID)
+	if err != nil {
+		return nil, err
 	}
 	if exists != nil {
 		return nil, apperror.NewBadRequestError("profile already exists", "PROFILE_ALREADY_EXISTS", nil)
@@ -60,17 +81,10 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 		UpdatedAt:  now,
 	}
 
-	// persist account to database
+	// persist profile to database
 	err = s.repo.CreateProfile(ctx, prof)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, apperror.NewBadRequestError(
-				fmt.Sprintf("profile with account ID %s already exists", req.AccountID),
-				"PROFILE_ALREADY_EXISTS",
-				err,
-			)
-		}
-		return nil, apperror.NewInternalServerError("failed to create profile", "CREATE_PROFILE_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to create profile", "CREATE_PROFILE_ERROR", nil)
 	}
 
 	return prof, nil
@@ -81,10 +95,23 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Check if profile already created
-	exists, err := s.GetProfileByAccountID(ctx, req.AccountID)
+	// Check if account exists
+	_, err := s.accountRepo.GetAccount(ctx, req.AccountID)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get profile by account id", "GET_PROFILE_BY_ACCOUNT_ID_ERROR", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.NewBadRequestError(
+				fmt.Sprintf("account with ID %s does not exist", req.AccountID),
+				"ACCOUNT_NOT_FOUND",
+				nil,
+			)
+		}
+		return nil, apperror.NewInternalServerError("failed to check account existence", "CHECK_ACCOUNT_ERROR", nil)
+	}
+
+	// Check if profile exists
+	exists, err := s.CheckAndGetProfile(ctx, req.AccountID)
+	if err != nil {
+		return nil, err
 	}
 	if exists == nil {
 		return nil, apperror.NewBadRequestError("profile not found", "PROFILE_NOT_FOUND", nil)
@@ -107,14 +134,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 	// persist account to database
 	err = s.repo.UpdateProfile(ctx, prof)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, apperror.NewBadRequestError(
-				fmt.Sprintf("profile with account ID %s already exists", req.AccountID),
-				"PROFILE_ALREADY_EXISTS",
-				err,
-			)
-		}
-		return nil, apperror.NewInternalServerError("failed to update profile", "UPDATE_PROFILE_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to update profile", "UPDATE_PROFILE_ERROR", nil)
 	}
 
 	return prof, nil
