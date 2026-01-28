@@ -53,6 +53,7 @@ func TestAccountService_CreateAccount(t *testing.T) {
 						assert.Equal(t, "test@example.com", acc.Email)
 						assert.Equal(t, "active", acc.State)
 						assert.NotEmpty(t, acc.ID)
+						assert.NotEmpty(t, acc.NodeID)
 						// Verify password is hashed
 						err := bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte("password123"))
 						assert.NoError(t, err)
@@ -224,6 +225,7 @@ func TestAccountService_Login(t *testing.T) {
 			setupMock: func() {
 				acc := &entity.Account{
 					ID:       uuid.New(),
+					NodeID:   uuid.New(),
 					Username: "testuser",
 					Email:    "test@example.com",
 					Password: string(hashedPassword),
@@ -260,6 +262,7 @@ func TestAccountService_Login(t *testing.T) {
 			setupMock: func() {
 				acc := &entity.Account{
 					ID:       uuid.New(),
+					NodeID:   uuid.New(),
 					Username: "testuser",
 					Email:    "test@example.com",
 					Password: string(hashedPassword), // Correct hashed password
@@ -281,6 +284,7 @@ func TestAccountService_Login(t *testing.T) {
 			setupMock: func() {
 				acc := &entity.Account{
 					ID:       uuid.New(),
+					NodeID:   uuid.New(),
 					Username: "testuser",
 					Email:    "test@example.com",
 					Password: "plaintext_not_hashed", // Invalid - not a bcrypt hash
@@ -302,6 +306,7 @@ func TestAccountService_Login(t *testing.T) {
 			setupMock: func() {
 				acc := &entity.Account{
 					ID:       uuid.New(),
+					NodeID:   uuid.New(),
 					Username: "testuser",
 					Email:    "test@example.com",
 					Password: string(hashedPassword),
@@ -357,6 +362,7 @@ func TestAccountService_Login_MissingJWTSecret(t *testing.T) {
 
 	acc := &entity.Account{
 		ID:       uuid.New(),
+		NodeID:   uuid.New(),
 		Username: "testuser",
 		Email:    "test@example.com",
 		Password: string(hashedPassword),
@@ -402,8 +408,8 @@ func TestAccountService_ListAccounts(t *testing.T) {
 			offset: 0,
 			setupMock: func() {
 				accounts := []*entity.Account{
-					{ID: uuid.New(), Username: "user1", Email: "user1@example.com"},
-					{ID: uuid.New(), Username: "user2", Email: "user2@example.com"},
+					{ID: uuid.New(), NodeID: uuid.New(), Username: "user1", Email: "user1@example.com"},
+					{ID: uuid.New(), NodeID: uuid.New(), Username: "user2", Email: "user2@example.com"},
 				}
 				mockRepo.EXPECT().
 					ListAccounts(ctx, 10, 0).

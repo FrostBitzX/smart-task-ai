@@ -9,6 +9,6 @@ import (
 
 type ProfileRepository interface {
 	CreateProfile(ctx context.Context, prof *entity.Profile) error
-	CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error)
-	UpdateProfile(ctx context.Context, prof *entity.Profile) error
+	GetProfile(ctx context.Context, accountID string, nodeID string) (*entity.Profile, error)
+	UpdateProfile(ctx context.Context, prof *entity.Profile, nodeID string) error
 }

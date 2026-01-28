@@ -22,13 +22,13 @@ func NewDeleteTaskUseCase(s *service.TaskService, l logger.Logger) *DeleteTaskUs
 	}
 }
 
-func (uc *DeleteTaskUseCase) Execute(ctx context.Context, taskID string) (string, error) {
+func (uc *DeleteTaskUseCase) Execute(ctx context.Context, taskID string, nodeID string) (string, error) {
 	parsedTaskID, err := utils.ParseID(taskID, entity.TaskIDPrefix)
 	if err != nil {
 		return "", apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
-	err = uc.taskService.DeleteTask(ctx, parsedTaskID)
+	err = uc.taskService.DeleteTask(ctx, parsedTaskID, nodeID)
 	if err != nil {
 		return "", err
 	}

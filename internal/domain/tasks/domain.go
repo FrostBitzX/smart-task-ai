@@ -42,7 +42,7 @@ func FromTaskModel(p *entity.Task) *Task {
 
 	task := &Task{
 		ID:             p.ID.String(),
-		NodeID:         "",
+		NodeID:         p.NodeID.String(),
 		ProjectID:      p.ProjectID.String(),
 		Name:           p.Name,
 		Description:    lo.FromPtr(p.Description),
@@ -55,10 +55,6 @@ func FromTaskModel(p *entity.Task) *Task {
 		Status:         Status{Todo: p.Status, InProgess: p.Status, Review: p.Status, Done: p.Status},
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
-	}
-
-	if p.NodeID != nil {
-		task.NodeID = p.NodeID.String()
 	}
 
 	return task

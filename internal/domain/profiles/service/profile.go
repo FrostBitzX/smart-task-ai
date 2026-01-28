@@ -28,8 +28,8 @@ func NewProfileService(repo profiles.ProfileRepository, accountRepo accounts.Acc
 	}
 }
 
-func (s *ProfileService) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
-	prof, err := s.repo.CheckAndGetProfile(ctx, accountID)
+func (s *ProfileService) CheckAndGetProfile(ctx context.Context, accountID string, nodeID string) (*entity.Profile, error) {
+	prof, err := s.repo.GetProfile(ctx, accountID, nodeID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -40,13 +40,19 @@ func (s *ProfileService) CheckAndGetProfile(ctx context.Context, accountID strin
 	return prof, nil
 }
 
-func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateProfileRequest) (*entity.Profile, error) {
+func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateProfileRequest, nodeID string) (*entity.Profile, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
+	// Parse nodeID
+	nodeUUID, err := uuid.Parse(nodeID)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", nil)
+	}
+
 	// Check if account exists
-	_, err := s.accountRepo.GetAccount(ctx, req.AccountID)
+	_, err = s.accountRepo.GetAccount(ctx, req.AccountID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, apperror.NewBadRequestError(
@@ -59,7 +65,7 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 	}
 
 	// Check if profile already exists
-	exists, err := s.CheckAndGetProfile(ctx, req.AccountID)
+	exists, err := s.CheckAndGetProfile(ctx, req.AccountID, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +77,7 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 	now := time.Now()
 	prof := &entity.Profile{
 		ID:         uuid.New(),
+		NodeID:     nodeUUID,
 		AccountID:  uuid.MustParse(req.AccountID),
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
@@ -90,13 +97,19 @@ func (s *ProfileService) CreateProfile(ctx context.Context, req *profile.CreateP
 	return prof, nil
 }
 
-func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateProfileRequest) (*entity.Profile, error) {
+func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateProfileRequest, nodeID string) (*entity.Profile, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
+	// Parse nodeID
+	nodeUUID, err := uuid.Parse(nodeID)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", nil)
+	}
+
 	// Check if account exists
-	_, err := s.accountRepo.GetAccount(ctx, req.AccountID)
+	_, err = s.accountRepo.GetAccount(ctx, req.AccountID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, apperror.NewBadRequestError(
@@ -109,7 +122,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 	}
 
 	// Check if profile exists
-	exists, err := s.CheckAndGetProfile(ctx, req.AccountID)
+	exists, err := s.CheckAndGetProfile(ctx, req.AccountID, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +134,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 	now := time.Now()
 	prof := &entity.Profile{
 		ID:         exists.ID,
+		NodeID:     nodeUUID,
 		AccountID:  uuid.MustParse(req.AccountID),
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
@@ -132,7 +146,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 	}
 
 	// persist account to database
-	err = s.repo.UpdateProfile(ctx, prof)
+	err = s.repo.UpdateProfile(ctx, prof, nodeID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to update profile", "UPDATE_PROFILE_ERROR", nil)
 	}

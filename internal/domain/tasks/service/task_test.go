@@ -26,6 +26,8 @@ func TestTaskService_CreateTask(t *testing.T) {
 	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	projectID := uuid.New()
+	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
+	nodeID := uuid.MustParse(nodeIDStr)
 
 	// Helper to create time strings
 	now := time.Now()
@@ -55,7 +57,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 				mockRepo.EXPECT().
@@ -84,7 +86,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 				mockRepo.EXPECT().
@@ -116,7 +118,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(nil, apperror.ErrRecordNotFound).
 					Times(1)
 			},
@@ -133,7 +135,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -151,7 +153,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 			},
@@ -169,7 +171,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 			},
@@ -187,7 +189,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 			},
@@ -205,7 +207,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 			},
@@ -221,7 +223,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockProjectRepo.EXPECT().
-					GetProjectByID(ctx, projectID).
+					GetProjectByID(ctx, projectID, nodeID).
 					Return(&projectEntity.Project{ID: projectID}, nil).
 					Times(1)
 				mockRepo.EXPECT().
@@ -239,7 +241,7 @@ func TestTaskService_CreateTask(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.CreateTask(ctx, tt.projectID, tt.request)
+			res, err := svc.CreateTask(ctx, tt.projectID, tt.request, nodeIDStr)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -269,6 +271,8 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
+	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
+	nodeID := uuid.MustParse(nodeIDStr)
 
 	tests := []struct {
 		name          string
@@ -287,7 +291,7 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 					Status: "todo",
 				}
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(expectedTask, nil).
 					Times(1)
 			},
@@ -299,7 +303,7 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(nil, apperror.ErrRecordNotFound).
 					Times(1)
 			},
@@ -311,7 +315,7 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -324,7 +328,7 @@ func TestTaskService_GetTaskByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.GetTaskByID(ctx, tt.taskID)
+			res, err := svc.GetTaskByID(ctx, tt.taskID, nodeIDStr)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -352,6 +356,8 @@ func TestTaskService_UpdateTask(t *testing.T) {
 	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
+	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
+	nodeID := uuid.MustParse(nodeIDStr)
 
 	now := time.Now()
 	newStartTime := now.Add(time.Hour).Format(time.RFC3339)
@@ -377,12 +383,12 @@ func TestTaskService_UpdateTask(t *testing.T) {
 					Name:   "Old Name",
 				}
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(existingTask, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					UpdateTask(ctx, gomock.Any()).
-					DoAndReturn(func(_ context.Context, tsk *entity.Task) error {
+					UpdateTask(ctx, gomock.Any(), nodeID).
+					DoAndReturn(func(_ context.Context, tsk *entity.Task, _ uuid.UUID) error {
 						assert.Equal(t, "Updated Name", tsk.Name)
 						return nil
 					}).
@@ -403,7 +409,7 @@ func TestTaskService_UpdateTask(t *testing.T) {
 					Status: "doing", // Not "todo"
 				}
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(existingTask, nil).
 					Times(1)
 			},
@@ -422,11 +428,11 @@ func TestTaskService_UpdateTask(t *testing.T) {
 					Status: "todo",
 				}
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(existingTask, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					UpdateTask(ctx, gomock.Any()).
+					UpdateTask(ctx, gomock.Any(), nodeID).
 					Return(nil).
 					Times(1)
 			},
@@ -441,7 +447,7 @@ func TestTaskService_UpdateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(nil, apperror.ErrRecordNotFound).
 					Times(1)
 			},
@@ -460,11 +466,11 @@ func TestTaskService_UpdateTask(t *testing.T) {
 					Status: "todo",
 				}
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(existingTask, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					UpdateTask(ctx, gomock.Any()).
+					UpdateTask(ctx, gomock.Any(), nodeID).
 					Return(errors.New("database error")).
 					Times(1)
 			},
@@ -477,7 +483,7 @@ func TestTaskService_UpdateTask(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.UpdateTask(ctx, tt.taskID, tt.request)
+			res, err := svc.UpdateTask(ctx, tt.taskID, tt.request, nodeIDStr)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -504,6 +510,8 @@ func TestTaskService_DeleteTask(t *testing.T) {
 	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	taskID := uuid.New()
+	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
+	nodeID := uuid.MustParse(nodeIDStr)
 
 	tests := []struct {
 		name          string
@@ -516,11 +524,11 @@ func TestTaskService_DeleteTask(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(&entity.Task{ID: taskID}, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					DeleteTask(ctx, taskID).
+					DeleteTask(ctx, taskID, nodeID).
 					Return(nil).
 					Times(1)
 			},
@@ -531,7 +539,7 @@ func TestTaskService_DeleteTask(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(nil, apperror.ErrRecordNotFound).
 					Times(1)
 			},
@@ -542,7 +550,7 @@ func TestTaskService_DeleteTask(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -553,11 +561,11 @@ func TestTaskService_DeleteTask(t *testing.T) {
 			taskID: taskID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					GetTaskByID(ctx, taskID).
+					GetTaskByID(ctx, taskID, nodeID).
 					Return(&entity.Task{ID: taskID}, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					DeleteTask(ctx, taskID).
+					DeleteTask(ctx, taskID, nodeID).
 					Return(errors.New("database error")).
 					Times(1)
 			},
@@ -569,7 +577,7 @@ func TestTaskService_DeleteTask(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			err := svc.DeleteTask(ctx, tt.taskID)
+			err := svc.DeleteTask(ctx, tt.taskID, nodeIDStr)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -590,6 +598,8 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 	svc := NewTaskService(mockRepo, mockProjectRepo)
 	ctx := context.Background()
 	projectID := uuid.New()
+	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
+	nodeID := uuid.MustParse(nodeIDStr)
 
 	tests := []struct {
 		name          string
@@ -607,7 +617,7 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 					{ID: uuid.New(), Name: "Task 2", ProjectID: projectID},
 				}
 				mockRepo.EXPECT().
-					ListTasksByProject(ctx, projectID).
+					ListTasksByProject(ctx, projectID, nodeID).
 					Return(tasks, nil).
 					Times(1)
 			},
@@ -619,7 +629,7 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 			projectID: projectID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					ListTasksByProject(ctx, projectID).
+					ListTasksByProject(ctx, projectID, nodeID).
 					Return([]*entity.Task{}, nil).
 					Times(1)
 			},
@@ -631,7 +641,7 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 			projectID: projectID,
 			setupMock: func() {
 				mockRepo.EXPECT().
-					ListTasksByProject(ctx, projectID).
+					ListTasksByProject(ctx, projectID, nodeID).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -644,7 +654,7 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.ListTasksByProject(ctx, tt.projectID)
+			res, err := svc.ListTasksByProject(ctx, tt.projectID, nodeIDStr)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)

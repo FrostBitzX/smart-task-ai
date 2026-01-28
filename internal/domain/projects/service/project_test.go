@@ -177,7 +177,7 @@ func TestProjectService_CreateProject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.CreateProject(ctx, tt.request)
+			res, err := svc.CreateProject(ctx, tt.request, "550e8400-e29b-41d4-a716-446655440000")
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -197,3 +197,4 @@ func TestProjectService_CreateProject(t *testing.T) {
 		})
 	}
 }
+

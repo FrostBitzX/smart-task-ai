@@ -23,7 +23,7 @@ func NewUpdateTaskUseCase(s *service.TaskService, l logger.Logger) *UpdateTaskUs
 	}
 }
 
-func (uc *UpdateTaskUseCase) Execute(ctx context.Context, taskID string, req *task.UpdateTaskRequest) (*task.UpdateTaskResponse, error) {
+func (uc *UpdateTaskUseCase) Execute(ctx context.Context, taskID string, req *task.UpdateTaskRequest, nodeID string) (*task.UpdateTaskResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
@@ -33,7 +33,7 @@ func (uc *UpdateTaskUseCase) Execute(ctx context.Context, taskID string, req *ta
 		return nil, apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
-	result, err := uc.taskService.UpdateTask(ctx, parsedTaskID, req)
+	result, err := uc.taskService.UpdateTask(ctx, parsedTaskID, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

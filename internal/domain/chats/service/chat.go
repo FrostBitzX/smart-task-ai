@@ -32,7 +32,7 @@ var codeBlockRegex = regexp.MustCompile("```(?:json)?\\s*([\\s\\S]*?)```")
 
 // ChatService defines the interface for chat operations
 type ChatService interface {
-	SendMessage(ctx context.Context, req *SendMessageRequest) (*SendMessageResponse, error)
+	SendMessage(ctx context.Context, req *SendMessageRequest, nodeID string) (*SendMessageResponse, error)
 }
 
 // SendMessageRequest represents a request to send a message
@@ -73,17 +73,17 @@ func NewChatService(
 }
 
 // SendMessage sends a message to the AI and returns the response
-func (s *chatService) SendMessage(ctx context.Context, req *SendMessageRequest) (*SendMessageResponse, error) {
+func (s *chatService) SendMessage(ctx context.Context, req *SendMessageRequest, nodeID string) (*SendMessageResponse, error) {
 	if err := s.validateRequest(req); err != nil {
 		return nil, err
 	}
 
-	project, err := s.projectService.GetProjectByID(ctx, req.ProjectID)
+	project, err := s.projectService.GetProjectByID(ctx, req.ProjectID, nodeID)
 	if err != nil {
 		return nil, s.handleProjectError(err)
 	}
 
-	tasks, err := s.taskService.ListTasksByProject(ctx, req.ProjectID)
+	tasks, err := s.taskService.ListTasksByProject(ctx, req.ProjectID, nodeID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to get tasks", "GET_TASKS_ERROR", err)
 	}

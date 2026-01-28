@@ -23,12 +23,12 @@ func NewGetProfileUseCase(svc *service.ProfileService, l logger.Logger) *GetProf
 	}
 }
 
-func (uc *GetProfileUseCase) Execute(ctx context.Context, req *profile.GetProfileByAccountIDRequest) (*profile.GetProfileByAccountIDResponse, error) {
+func (uc *GetProfileUseCase) Execute(ctx context.Context, req *profile.GetProfileByAccountIDRequest, nodeID string) (*profile.GetProfileByAccountIDResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	prof, err := uc.profileService.CheckAndGetProfile(ctx, req.AccountID)
+	prof, err := uc.profileService.CheckAndGetProfile(ctx, req.AccountID, nodeID)
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,7 @@ const TaskIDPrefix = "tsk"
 
 type Task struct {
 	ID             uuid.UUID      `json:"id" gorm:"column:id"`
-	NodeID         *uuid.UUID     `json:"nodeId" gorm:"column:node_id"`
+	NodeID         uuid.UUID      `json:"nodeId" gorm:"column:node_id;type:char(36);not null;index"`
 	ProjectID      uuid.UUID      `json:"projectId" gorm:"column:project_id"`
 	Name           string         `json:"name" gorm:"column:name"`
 	Description    *string        `json:"description" gorm:"column:description"`

@@ -6,6 +6,8 @@ paths:
       description: Get task by ID
       tags:
         - task
+      security:
+        - bearerAuth: []
       parameters:
         - name: taskId
           in: path
@@ -27,6 +29,10 @@ paths:
                         $ref: "../schemas/get-task-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
+        "403":
+          $ref: "../../../shared/responses/forbidden.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
@@ -37,6 +43,8 @@ paths:
       description: Update task by ID
       tags:
         - task
+      security:
+        - bearerAuth: []
       parameters:
         - name: taskId
           in: path
@@ -66,6 +74,10 @@ paths:
                         $ref: "../schemas/update-task-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
+        "403":
+          $ref: "../../../shared/responses/forbidden.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
@@ -76,6 +88,8 @@ paths:
       description: Delete task by ID
       tags:
         - task
+      security:
+        - bearerAuth: []
       parameters:
         - name: taskId
           in: path
@@ -99,6 +113,10 @@ paths:
                         $ref: "../schemas/delete-task-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
+        "403":
+          $ref: "../../../shared/responses/forbidden.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
@@ -111,6 +129,8 @@ paths:
       description: Create task
       tags:
         - task
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -138,6 +158,10 @@ paths:
                         $ref: "../schemas/create-task-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
+        "403":
+          $ref: "../../../shared/responses/forbidden.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
@@ -148,6 +172,8 @@ paths:
       operationId: listTaskByProject
       tags:
         - task
+      security:
+        - bearerAuth: []
       parameters:
         - name: projectId
           in: path
@@ -169,7 +195,12 @@ paths:
                         $ref: "../schemas/list-tasks-by-project-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
+        "403":
+          $ref: "../../../shared/responses/forbidden.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
+

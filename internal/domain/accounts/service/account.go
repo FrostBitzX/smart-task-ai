@@ -51,6 +51,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	now := time.Now()
 	acc := &entity.Account{
 		ID:        uuid.New(),
+		NodeID:    uuid.New(),
 		Username:  req.Username,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
@@ -86,11 +87,14 @@ func (s *AccountService) Login(ctx context.Context, req *account.LoginRequest) (
 		return "", apperror.NewBadRequestError("invalid username or password", "LOGIN_ERROR", nil)
 	}
 
+	expirationTime := time.Now().Add(time.Hour * 72).Unix()
+
 	claims := jwt.MapClaims{
-		"AccountId": acc.ID,
+		"AccountId": acc.ID.String(),
+		"NodeId":    acc.NodeID.String(),
 		"Email":     acc.Email,
 		"Username":  acc.Username,
-		"Exp":       time.Now().Add(time.Hour * 72).Unix(),
+		"Exp":       expirationTime,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

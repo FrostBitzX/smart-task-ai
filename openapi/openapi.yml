@@ -2,9 +2,57 @@ openapi: 3.0.3
 info:
   title: Smart Task AI API
   version: 1.0.0
-  description: API for managing services
+  description: |
+    API for managing services with multi-tenant isolation.
+    
+    ## Multi-Tenant Isolation
+    
+    This API implements tenant isolation using a `node_id` identifier. Each account is assigned
+    a unique `node_id` during signup, which serves as the tenant identifier.
+    
+    ### Authentication & Authorization
+    
+    - All authenticated endpoints require a JWT bearer token in the Authorization header
+    - The JWT token contains both `AccountId` and `NodeId` claims
+    - All data access operations are automatically filtered by the authenticated user's `node_id`
+    - Cross-tenant access attempts will result in 403 Forbidden or 404 Not Found responses
+    
+    ### Data Isolation
+    
+    The following resources are tenant-isolated:
+    - Projects: Only projects belonging to your `node_id` are accessible
+    - Tasks: Only tasks within projects of your `node_id` are accessible
+    - Profiles: Only profiles associated with your `node_id` are accessible
+    
+    ### Error Responses
+    
+    - **401 Unauthorized**: Missing or invalid JWT token, missing/invalid `node_id` in token
+    - **403 Forbidden**: Cross-tenant access attempt detected
+    - **404 Not Found**: Resource not found or belongs to a different tenant
 
 servers: []
+
+# Security schemes
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from the login endpoint.
+        
+        The token must contain the following claims:
+        - AccountId: User's account identifier
+        - NodeId: Tenant identifier for multi-tenant isolation
+        - Email: User's email address
+        - Username: User's username
+        - Exp: Token expiration timestamp
+        
+        Include the token in the Authorization header as: `Bearer <token>`
+        
+        All authenticated endpoints automatically filter data by the NodeId claim
+        to ensure tenant isolation.
 
 # Tags for logical grouping of operations
 tags:
@@ -61,3 +109,4 @@ paths:
   # Chat endpoints
   /api/{projectId}/chat:
     $ref: "./resources/chat/paths/item.yml#/paths/~1api~1{projectId}~1chat"
+

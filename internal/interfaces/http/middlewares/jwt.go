@@ -72,6 +72,7 @@ func JWTMiddleware() fiber.Handler {
 		username, _ := claims["Username"].(string)
 		accountID, _ := claims["AccountId"].(string)
 		email, _ := claims["Email"].(string)
+		nodeID, _ := claims["NodeId"].(string)
 
 		if accountID == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(responses.ErrorResponse{
@@ -85,9 +86,22 @@ func JWTMiddleware() fiber.Handler {
 			})
 		}
 
+		if nodeID == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(responses.ErrorResponse{
+				Success: false,
+				Message: "missing node id in token",
+				Data:    nil,
+				Error: responses.ErrorDetail{
+					Code:    fiber.StatusUnauthorized,
+					Message: "MISSING_NODE_ID",
+				},
+			})
+		}
+
 		// Save all claims into context (Locals)
 		c.Locals("jwt_claims", map[string]interface{}{
 			"AccountId": accountID,
+			"NodeId":    nodeID,
 			"Email":     email,
 			"Username":  username,
 		})

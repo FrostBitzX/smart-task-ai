@@ -47,8 +47,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
@@ -79,8 +78,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
@@ -113,8 +111,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					ID:        uuid.New(),
 					AccountID: uuid.MustParse(accountID),
 				}
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(existingProfile, nil).
 					Times(1)
 			},
@@ -133,8 +130,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
 				// The implementation calls CheckAndGetProfile which fails
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -152,8 +148,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
@@ -161,7 +156,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					Return(gorm.ErrDuplicatedKey).
 					Times(1)
 			},
-			expectedError: "already exists",
+			expectedError: "failed to create profile",
 			expectNil:     true,
 		},
 		{
@@ -175,8 +170,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 				mockRepo.EXPECT().
@@ -193,7 +187,7 @@ func TestProfileService_CreateProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.CreateProfile(ctx, tt.request)
+			res, err := svc.CreateProfile(ctx, tt.request, "550e8400-e29b-41d4-a716-446655440000")
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -252,13 +246,12 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(existingProfile, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					UpdateProfile(ctx, gomock.Any()).
-					DoAndReturn(func(_ context.Context, prof *entity.Profile) error {
+					UpdateProfile(ctx, gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, prof *entity.Profile, _ string) error {
 						assert.Equal(t, profileID, prof.ID)
 						assert.Equal(t, "Updated", prof.FirstName)
 						assert.Equal(t, "Name", prof.LastName)
@@ -287,8 +280,7 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 			},
@@ -306,8 +298,7 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -329,12 +320,11 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 					GetAccount(ctx, accountID).
 					Return(&accountEntity.Account{ID: uuid.MustParse(accountID)}, nil).
 					Times(1)
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(existingProfile, nil).
 					Times(1)
 				mockRepo.EXPECT().
-					UpdateProfile(ctx, gomock.Any()).
+					UpdateProfile(ctx, gomock.Any(), gomock.Any()).
 					Return(errors.New("database error")).
 					Times(1)
 			},
@@ -347,7 +337,7 @@ func TestProfileService_UpdateProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.UpdateProfile(ctx, tt.request)
+			res, err := svc.UpdateProfile(ctx, tt.request, "550e8400-e29b-41d4-a716-446655440000")
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -395,8 +385,7 @@ func TestProfileService_CheckAndGetProfile(t *testing.T) {
 					FirstName: "John",
 					LastName:  "Doe",
 				}
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(prof, nil).
 					Times(1)
 			},
@@ -407,8 +396,7 @@ func TestProfileService_CheckAndGetProfile(t *testing.T) {
 			name:      "success - returns nil when not found",
 			accountID: accountID,
 			setupMock: func() {
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, gorm.ErrRecordNotFound).
 					Times(1)
 			},
@@ -419,8 +407,7 @@ func TestProfileService_CheckAndGetProfile(t *testing.T) {
 			name:      "error - repository fails",
 			accountID: accountID,
 			setupMock: func() {
-				mockRepo.EXPECT().
-					CheckAndGetProfile(ctx, accountID).
+				mockRepo.EXPECT().GetProfile(ctx, accountID, gomock.Any()).
 					Return(nil, errors.New("database error")).
 					Times(1)
 			},
@@ -433,7 +420,7 @@ func TestProfileService_CheckAndGetProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMock()
 
-			res, err := svc.CheckAndGetProfile(ctx, tt.accountID)
+			res, err := svc.CheckAndGetProfile(ctx, tt.accountID, "550e8400-e29b-41d4-a716-446655440000")
 
 			if tt.expectedError != "" {
 				require.Error(t, err)

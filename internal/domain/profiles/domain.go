@@ -35,7 +35,7 @@ func FromProfileModel(p *entity.Profile) *Profile {
 
 	prof := &Profile{
 		ID:         p.ID.String(),
-		NodeID:     "",
+		NodeID:     p.NodeID.String(),
 		AccountID:  p.AccountID.String(),
 		FirstName:  p.FirstName,
 		LastName:   p.LastName,
@@ -44,10 +44,6 @@ func FromProfileModel(p *entity.Profile) *Profile {
 		State:      State{Active: p.State, Inactive: p.State},
 		CreatedAt:  p.CreatedAt,
 		UpdatedAt:  p.UpdatedAt,
-	}
-
-	if p.NodeID != nil {
-		prof.NodeID = p.NodeID.String()
 	}
 
 	return prof

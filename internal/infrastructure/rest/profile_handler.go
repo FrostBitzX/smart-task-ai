@@ -41,7 +41,7 @@ func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	// Get AccountID from JWT claims
+	// Get AccountID and NodeID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
@@ -54,10 +54,16 @@ func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
 	// Set AccountID from JWT
 	req.AccountID = accountID
 
-	data, err := h.CreateProfileUC.Execute(c.Context(), req)
+	data, err := h.CreateProfileUC.Execute(c.Context(), req, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -66,7 +72,7 @@ func (h *ProfileHandler) CreateProfile(c *fiber.Ctx) error {
 }
 
 func (h *ProfileHandler) GetProfile(c *fiber.Ctx) error {
-	// Get AccountID from JWT claims
+	// Get AccountID and NodeID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
@@ -79,11 +85,17 @@ func (h *ProfileHandler) GetProfile(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
 	req := &profile.GetProfileByAccountIDRequest{
 		AccountID: accountID,
 	}
 
-	data, err := h.GetProfileUC.Execute(c.Context(), req)
+	data, err := h.GetProfileUC.Execute(c.Context(), req, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -100,7 +112,7 @@ func (h *ProfileHandler) UpdateProfile(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrInvalidData)
 	}
 
-	// Get AccountID from JWT claims
+	// Get AccountID and NodeID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
@@ -113,10 +125,16 @@ func (h *ProfileHandler) UpdateProfile(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
 	// Set AccountID from JWT
 	req.AccountID = accountID
 
-	data, err := h.UpdateProfileUC.Execute(c.Context(), req)
+	data, err := h.UpdateProfileUC.Execute(c.Context(), req, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}

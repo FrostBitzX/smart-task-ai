@@ -41,21 +41,6 @@ func (m *MockProfileRepository) EXPECT() *MockProfileRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CheckAndGetProfile mocks base method.
-func (m *MockProfileRepository) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckAndGetProfile", ctx, accountID)
-	ret0, _ := ret[0].(*entity.Profile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckAndGetProfile indicates an expected call of CheckAndGetProfile.
-func (mr *MockProfileRepositoryMockRecorder) CheckAndGetProfile(ctx, accountID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAndGetProfile", reflect.TypeOf((*MockProfileRepository)(nil).CheckAndGetProfile), ctx, accountID)
-}
-
 // CreateProfile mocks base method.
 func (m *MockProfileRepository) CreateProfile(ctx context.Context, prof *entity.Profile) error {
 	m.ctrl.T.Helper()
@@ -70,16 +55,31 @@ func (mr *MockProfileRepositoryMockRecorder) CreateProfile(ctx, prof any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileRepository)(nil).CreateProfile), ctx, prof)
 }
 
-// UpdateProfile mocks base method.
-func (m *MockProfileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile) error {
+// GetProfile mocks base method.
+func (m *MockProfileRepository) GetProfile(ctx context.Context, accountID, nodeID string) (*entity.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProfile", ctx, prof)
+	ret := m.ctrl.Call(m, "GetProfile", ctx, accountID, nodeID)
+	ret0, _ := ret[0].(*entity.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfile indicates an expected call of GetProfile.
+func (mr *MockProfileRepositoryMockRecorder) GetProfile(ctx, accountID, nodeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockProfileRepository)(nil).GetProfile), ctx, accountID, nodeID)
+}
+
+// UpdateProfile mocks base method.
+func (m *MockProfileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile, nodeID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProfile", ctx, prof, nodeID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateProfile indicates an expected call of UpdateProfile.
-func (mr *MockProfileRepositoryMockRecorder) UpdateProfile(ctx, prof any) *gomock.Call {
+func (mr *MockProfileRepositoryMockRecorder) UpdateProfile(ctx, prof, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileRepository)(nil).UpdateProfile), ctx, prof)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileRepository)(nil).UpdateProfile), ctx, prof, nodeID)
 }

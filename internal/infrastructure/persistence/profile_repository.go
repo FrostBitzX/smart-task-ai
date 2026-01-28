@@ -20,6 +20,17 @@ func (r *profileRepository) CreateProfile(ctx context.Context, prof *entity.Prof
 	return r.db.WithContext(ctx).Create(prof).Error
 }
 
+func (r *profileRepository) GetProfile(ctx context.Context, accountID string, nodeID string) (*entity.Profile, error) {
+	var profile entity.Profile
+	err := r.db.WithContext(ctx).
+		Where("account_id = ? AND node_id = ?", accountID, nodeID).
+		First(&profile).Error
+	if err != nil {
+		return nil, err
+	}
+	return &profile, nil
+}
+
 func (r *profileRepository) CheckAndGetProfile(ctx context.Context, accountID string) (*entity.Profile, error) {
 	var profile entity.Profile
 	err := r.db.WithContext(ctx).
@@ -32,6 +43,10 @@ func (r *profileRepository) CheckAndGetProfile(ctx context.Context, accountID st
 	return &profile, nil
 }
 
-func (r *profileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile) error {
-	return r.db.WithContext(ctx).Save(prof).Error
+func (r *profileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile, nodeID string) error {
+
+	return r.db.WithContext(ctx).
+		Model(&entity.Profile{}).
+		Where("account_id = ? AND node_id = ?", prof.AccountID, nodeID).
+		Updates(prof).Error
 }
