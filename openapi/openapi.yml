@@ -68,6 +68,8 @@ tags:
     description: Operations related to task management
   - name: chat
     description: AI chat assistant for task management
+  - name: dashboard
+    description: Dashboard statistics and task lists
 
 # All paths are referenced from external files
 paths:
@@ -109,4 +111,14 @@ paths:
   # Chat endpoints
   /api/{projectId}/chat:
     $ref: "./resources/chat/paths/item.yml#/paths/~1api~1{projectId}~1chat"
+
+  # Dashboard endpoints
+  /api/dashboard/statistics:
+    $ref: "./resources/dashboard/paths/collection.yml#/paths/~1api~1dashboard~1statistics"
+
+  /api/dashboard/unscheduled-tasks:
+    $ref: "./resources/dashboard/paths/collection.yml#/paths/~1api~1dashboard~1unscheduled-tasks"
+
+  /api/dashboard/today-tasks:
+    $ref: "./resources/dashboard/paths/collection.yml#/paths/~1api~1dashboard~1today-tasks"
 

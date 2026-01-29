@@ -6,6 +6,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/middlewares"
 
 	chatUC "github.com/FrostBitzX/smart-task-ai/internal/application/chat/usecase"
+	dashboardUseCase "github.com/FrostBitzX/smart-task-ai/internal/application/dashboard/usecase"
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
 	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
 	taskUC "github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
@@ -92,4 +93,16 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 		// Chat routes (protected by JWT middleware via /api group)
 		api.Post("/:projectId/chat", chatHandlerInstance.SendMessage)
 	}
+
+	// Dashboard setup
+	getTaskStatisticsUC := dashboardUseCase.NewGetTaskStatisticsUseCase(taskService, log)
+	getUnscheduledTasksUC := dashboardUseCase.NewGetUnscheduledTasksUseCase(taskService, log)
+	listTodayTasksUC := dashboardUseCase.NewListTodayTasksUseCase(taskService, log)
+	dashboardHandlerInstance := handler.NewDashboardHandler(getTaskStatisticsUC, getUnscheduledTasksUC, listTodayTasksUC, log)
+
+	// Dashboard routes
+	dashboard := api.Group("/dashboard")
+	dashboard.Get("/statistics", dashboardHandlerInstance.GetTaskStatistics)
+	dashboard.Get("/unscheduled-tasks", dashboardHandlerInstance.GetUnscheduledTasks)
+	dashboard.Get("/today-tasks", dashboardHandlerInstance.ListTodayTasks)
 }

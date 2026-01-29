@@ -8,6 +8,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/mocks"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
@@ -670,4 +671,113 @@ func TestTaskService_ListTasksByProject(t *testing.T) {
 // Helper function to create string pointers
 func strPtr(s string) *string {
 	return &s
+}
+
+func TestTaskService_GetTaskStatistics(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mocks.NewMockTaskRepository(ctrl)
+	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
+	svc := NewTaskService(mockRepo, mockProjectRepo)
+	ctx := context.Background()
+	nodeID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+
+	tests := []struct {
+		name          string
+		setupMock     func()
+		expectedStats *tasks.TaskStatistics
+		expectedError string
+	}{
+		{
+			name: "success - returns statistics with all statuses",
+			setupMock: func() {
+				statusCounts := []tasks.StatusCount{
+					{Status: "todo", Count: 5},
+					{Status: "in_progress", Count: 3},
+					{Status: "in_review", Count: 2},
+					{Status: "done", Count: 10},
+				}
+				mockRepo.EXPECT().
+					CountTasksByStatus(ctx, nodeID).
+					Return(statusCounts, nil).
+					Times(1)
+			},
+			expectedStats: &tasks.TaskStatistics{
+				Todo:       5,
+				InProgress: 3,
+				InReview:   2,
+				Done:       10,
+			},
+			expectedError: "",
+		},
+		{
+			name: "success - returns statistics with some statuses missing",
+			setupMock: func() {
+				statusCounts := []tasks.StatusCount{
+					{Status: "todo", Count: 2},
+					{Status: "done", Count: 5},
+				}
+				mockRepo.EXPECT().
+					CountTasksByStatus(ctx, nodeID).
+					Return(statusCounts, nil).
+					Times(1)
+			},
+			expectedStats: &tasks.TaskStatistics{
+				Todo:       2,
+				InProgress: 0,
+				InReview:   0,
+				Done:       5,
+			},
+			expectedError: "",
+		},
+		{
+			name: "success - returns zero statistics when no tasks",
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CountTasksByStatus(ctx, nodeID).
+					Return([]tasks.StatusCount{}, nil).
+					Times(1)
+			},
+			expectedStats: &tasks.TaskStatistics{
+				Todo:       0,
+				InProgress: 0,
+				InReview:   0,
+				Done:       0,
+			},
+			expectedError: "",
+		},
+		{
+			name: "error - repository fails",
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CountTasksByStatus(ctx, nodeID).
+					Return(nil, errors.New("database error")).
+					Times(1)
+			},
+			expectedStats: nil,
+			expectedError: "failed to get task statistics",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+
+			res, err := svc.GetTaskStatistics(ctx, nodeID)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Nil(t, res)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, tt.expectedStats.Todo, res.Todo)
+				assert.Equal(t, tt.expectedStats.InProgress, res.InProgress)
+				assert.Equal(t, tt.expectedStats.InReview, res.InReview)
+				assert.Equal(t, tt.expectedStats.Done, res.Done)
+			}
+		})
+	}
 }

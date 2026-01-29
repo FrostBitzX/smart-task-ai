@@ -210,6 +210,54 @@ func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeIDSt
 	return nil
 }
 
+func (s *TaskService) GetTaskStatistics(ctx context.Context, nodeID uuid.UUID) (*tasks.TaskStatistics, error) {
+	status, err := s.repo.CountTasksByStatus(ctx, nodeID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to get task statistics", "GET_STATISTICS_ERROR", err)
+	}
+
+	// Convert slice of StatusCount to TaskStatistics struct
+	statistics := &tasks.TaskStatistics{
+		Todo:       0,
+		InProgress: 0,
+		InReview:   0,
+		Done:       0,
+	}
+
+	for _, sc := range status {
+		switch sc.Status {
+		case "todo":
+			statistics.Todo = sc.Count
+		case "in_progress":
+			statistics.InProgress = sc.Count
+		case "in_review":
+			statistics.InReview = sc.Count
+		case "done":
+			statistics.Done = sc.Count
+		}
+	}
+
+	return statistics, nil
+}
+
+func (s *TaskService) GetUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error) {
+	tasks, err := s.repo.ListUnscheduledTasks(ctx, nodeID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to get unscheduled tasks", "GET_UNSCHEDULED_TASKS_ERROR", err)
+	}
+
+	return tasks, nil
+}
+
+func (s *TaskService) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error) {
+	tasks, err := s.repo.ListTodayTasks(ctx, nodeID, today)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to list today's tasks", "LIST_TODAY_TASKS_ERROR", err)
+	}
+
+	return tasks, nil
+}
+
 func (s *TaskService) validateTimeRange(startStr, endStr *string) error {
 	if startStr != nil && endStr != nil {
 		start, err := time.Parse(time.RFC3339, *startStr)

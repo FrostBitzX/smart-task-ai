@@ -8,10 +8,24 @@ import (
 )
 
 type Status struct {
-	Todo      string
-	InProgess string
-	Review    string
-	Done      string
+	Todo       string
+	InProgress string
+	InReview   string
+	Done       string
+}
+
+// TaskStatistics represents the count of tasks grouped by status
+type TaskStatistics struct {
+	Todo       int64 `json:"todo"`
+	InProgress int64 `json:"in_progress"`
+	InReview   int64 `json:"in_review"`
+	Done       int64 `json:"done"`
+}
+
+// StatusCount represents a single status count result from database
+type StatusCount struct {
+	Status string
+	Count  int64
 }
 
 // Task represents the task data exposed via the HTTP API.
@@ -52,7 +66,7 @@ func FromTaskModel(p *entity.Task) *Task {
 		Location:       lo.FromPtr(p.Location),
 		RecurringDays:  lo.FromPtr(p.RecurringDays),
 		RecurringUntil: lo.FromPtr(p.RecurringUntil),
-		Status:         Status{Todo: p.Status, InProgess: p.Status, Review: p.Status, Done: p.Status},
+		Status:         Status{Todo: "todo", InProgress: "in_progress", InReview: "in_review", Done: "done"},
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
 	}

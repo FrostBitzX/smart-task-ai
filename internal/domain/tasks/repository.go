@@ -3,6 +3,7 @@ package tasks
 
 import (
 	"context"
+	"time"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/entity"
 	"github.com/google/uuid"
@@ -15,4 +16,7 @@ type TaskRepository interface {
 	CountTasksByProject(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) (int64, error)
 	UpdateTask(ctx context.Context, task *entity.Task, nodeID uuid.UUID) error
 	DeleteTask(ctx context.Context, taskID uuid.UUID, nodeID uuid.UUID) error
+	CountTasksByStatus(ctx context.Context, nodeID uuid.UUID) ([]StatusCount, error)
+	ListUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error)
+	ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error)
 }
