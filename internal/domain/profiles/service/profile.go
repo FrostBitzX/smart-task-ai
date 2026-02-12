@@ -8,6 +8,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/profile"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
+	"github.com/FrostBitzX/smart-task-ai/pkg/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -133,17 +134,19 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, req *profile.UpdateP
 	// create domain entity
 	now := time.Now()
 	prof := &entity.Profile{
-		ID:         exists.ID,
-		NodeID:     nodeUUID,
-		AccountID:  uuid.MustParse(req.AccountID),
-		FirstName:  req.FirstName,
-		LastName:   req.LastName,
-		Nickname:   req.Nickname,
-		AvatarPath: req.AvatarPath,
-		State:      "active",
-		CreatedAt:  exists.CreatedAt,
-		UpdatedAt:  now,
+		ID:        exists.ID,
+		NodeID:    nodeUUID,
+		AccountID: uuid.MustParse(req.AccountID),
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		State:     "active",
+		CreatedAt: exists.CreatedAt,
+		UpdatedAt: now,
 	}
+
+	// Nullable fields
+	utils.UpdateNullableString(&prof.Nickname, req.Nickname)
+	utils.UpdateNullableString(&prof.AvatarPath, req.AvatarPath)
 
 	// persist account to database
 	err = s.repo.UpdateProfile(ctx, prof, nodeID)

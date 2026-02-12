@@ -56,6 +56,7 @@ func (r *taskRepository) CountTasksByProject(ctx context.Context, projectID uuid
 func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task, nodeID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Model(&entity.Task{}).
+		Select("*").
 		Where("id = ? AND node_id = ?", task.ID, nodeID).
 		Updates(task).Error
 }
@@ -88,8 +89,7 @@ func (r *taskRepository) ListUnscheduledTasks(ctx context.Context, nodeID uuid.U
 		Preload("Project").
 		Where("node_id = ?", nodeID).
 		Where("status IN (?)", []string{"todo", "in_progress"}).
-		Where("start_datetime IS NULL").
-		Where("end_datetime IS NULL").
+		Where("(start_datetime IS NULL OR end_datetime IS NULL)").
 		Order("updated_at DESC").
 		Find(&tasks).Error
 
@@ -110,7 +110,11 @@ func (r *taskRepository) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, t
 	err := r.db.WithContext(ctx).
 		Preload("Project").
 		Where("node_id = ?", nodeID).
-		Where("start_datetime >= ? AND start_datetime <= ?", startOfDay, endOfDay).
+		Where(
+			r.db.Where("start_datetime >= ? AND start_datetime <= ?", startOfDay, endOfDay).
+				Or("end_datetime >= ? AND end_datetime <= ?", startOfDay, endOfDay).
+				Or("(start_datetime < ? AND end_datetime > ?)", startOfDay, endOfDay),
+		).
 		Order("start_datetime ASC").
 		Find(&tasks).Error
 

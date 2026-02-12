@@ -47,6 +47,7 @@ func (r *profileRepository) UpdateProfile(ctx context.Context, prof *entity.Prof
 
 	return r.db.WithContext(ctx).
 		Model(&entity.Profile{}).
+		Select("*").
 		Where("account_id = ? AND node_id = ?", prof.AccountID, nodeID).
 		Updates(prof).Error
 }

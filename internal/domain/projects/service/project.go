@@ -8,6 +8,7 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/application/project"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
+	pkgutils "github.com/FrostBitzX/smart-task-ai/pkg/utils"
 	"github.com/google/uuid"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects"
@@ -124,9 +125,9 @@ func (s *ProjectService) UpdateProject(ctx context.Context, req *project.UpdateP
 	}
 
 	proj.Name = req.Name
-	if req.Config != nil {
-		proj.Config = req.Config
-	}
+
+	// Nullable field
+	pkgutils.UpdateNullableJSON((*[]byte)(&proj.Config), req.Config)
 
 	proj.UpdatedAt = time.Now()
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
+	"github.com/FrostBitzX/smart-task-ai/pkg/utils"
 	"github.com/google/uuid"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects"
@@ -156,27 +157,18 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	if req.Status != nil {
 		tsk.Status = *req.Status
 	}
-	if req.Description != nil {
-		tsk.Description = req.Description
-	}
 	if req.Priority != "" {
 		tsk.Priority = req.Priority
 	}
-	if req.Location != nil {
-		tsk.Location = req.Location
-	}
-	if req.RecurringDays != nil {
-		tsk.RecurringDays = req.RecurringDays
-	}
-	if req.RecurringUntil != nil {
-		tsk.RecurringUntil = req.RecurringUntil
-	}
-	if req.StartDateTime != nil {
-		tsk.StartDateTime = req.StartDateTime
-	}
-	if req.EndDateTime != nil {
-		tsk.EndDateTime = req.EndDateTime
-	}
+
+	// Nullable fields
+	utils.UpdateNullableString(&tsk.Description, req.Description)
+	utils.UpdateNullableString(&tsk.Location, req.Location)
+	utils.UpdateNullableString(&tsk.StartDateTime, req.StartDateTime)
+	utils.UpdateNullableString(&tsk.EndDateTime, req.EndDateTime)
+	utils.UpdateNullableInt(&tsk.RecurringDays, req.RecurringDays)
+	utils.UpdateNullableString(&tsk.RecurringUntil, req.RecurringUntil)
+
 	tsk.UpdatedAt = time.Now()
 
 	err = s.repo.UpdateTask(ctx, tsk, nodeID)

@@ -58,6 +58,7 @@ func (r *projectRepository) UpdateProject(ctx context.Context, proj *entity.Proj
 	// Verify the project belongs to the tenant before updating
 	return r.db.WithContext(ctx).
 		Model(&entity.Project{}).
+		Select("*"). 
 		Where("id = ? AND node_id = ?", proj.ID, nodeID).
 		Updates(proj).Error
 }
