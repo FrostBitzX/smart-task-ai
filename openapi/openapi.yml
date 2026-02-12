@@ -67,9 +67,11 @@ tags:
   - name: task
     description: Operations related to task management
   - name: chat
-    description: AI chat assistant for task management
+    description: Operations related to AI chat assistant for task management
   - name: dashboard
-    description: Dashboard statistics and task lists
+    description: Operations related to Dashboard statistics and task lists
+  - name: file
+    description: Operations related to File upload operations
 
 # All paths are referenced from external files
 paths:
@@ -121,4 +123,11 @@ paths:
 
   /api/dashboard/today-tasks:
     $ref: "./resources/dashboard/paths/collection.yml#/paths/~1api~1dashboard~1today-tasks"
+
+  # File upload endpoints
+  /api/files/avatar/presign:
+    $ref: "./resources/file/paths/avatar.yml#/paths/~1api~1files~1avatar~1presign"
+
+  /api/files/avatar/upload:
+    $ref: "./resources/file/paths/avatar.yml#/paths/~1api~1files~1avatar~1upload"
 

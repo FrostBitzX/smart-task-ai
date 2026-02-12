@@ -1,16 +1,20 @@
 package routes
 
 import (
+	"os"
+
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/groq"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/interfaces/http/middlewares"
 
 	chatUC "github.com/FrostBitzX/smart-task-ai/internal/application/chat/usecase"
 	dashboardUseCase "github.com/FrostBitzX/smart-task-ai/internal/application/dashboard/usecase"
+	"github.com/FrostBitzX/smart-task-ai/internal/application/file"
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
 	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
 	taskUC "github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
 	chatDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/chats/service"
+	"github.com/FrostBitzX/smart-task-ai/internal/domain/profiles"
 	profileDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/profiles/service"
 	projectDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/service"
 	taskDomain "github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
@@ -105,4 +109,51 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	dashboard.Get("/statistics", dashboardHandlerInstance.GetTaskStatistics)
 	dashboard.Get("/unscheduled-tasks", dashboardHandlerInstance.GetUnscheduledTasks)
 	dashboard.Get("/today-tasks", dashboardHandlerInstance.ListTodayTasks)
+
+	// Upload setup
+	SetupUploadHandlers(api, db, profileRepository, log)
+}
+
+// SetupUploadHandlers sets up upload-related routes and dependencies
+func SetupUploadHandlers(api fiber.Router, db *gorm.DB, profileRepo profiles.ProfileRepository, log logger.Logger) {
+	// Get environment
+	endpoint := os.Getenv("S3_ENDPOINT")
+	region := os.Getenv("S3_REGION")
+	bucketName := os.Getenv("S3_BUCKET")
+	accessKeyID := os.Getenv("S3_ACCESS_KEY")
+	secretAccessKey := os.Getenv("S3_SECRET_KEY")
+	publicURL := os.Getenv("SUPABASE_PUBLIC_URL")
+
+	// Validate required configuration
+	if endpoint == "" || accessKeyID == "" || secretAccessKey == "" || publicURL == "" {
+		log.Warn("Supabase Storage configuration incomplete, file upload endpoints will not be available", map[string]interface{}{
+			"endpoint":   endpoint != "",
+			"access_key": accessKeyID != "",
+			"secret_key": secretAccessKey != "",
+			"public_url": publicURL != "",
+		})
+		return
+	}
+
+	// Create storage repository
+	storageRepo, err := repo.NewFileRepository(endpoint, region, bucketName, accessKeyID, secretAccessKey, publicURL)
+	if err != nil {
+		log.Error("Failed to initialize storage repository, upload endpoints will not be available", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Create file service
+	fileService := file.NewFileService(storageRepo, profileRepo)
+
+	// Create file handler
+	fileHandler := handler.NewFileHandler(fileService, log)
+
+	// Register routes
+	fileGroup := api.Group("/files/avatar")
+	fileGroup.Post("/presign", fileHandler.GeneratePresignedURL)
+	fileGroup.Post("/upload", fileHandler.UploadFileS3)
+
+	log.Info("File upload endpoints registered successfully", nil)
 }

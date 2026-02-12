@@ -24,7 +24,7 @@ func UpdateNullableInt(target **int, input *int) {
 
 // UpdateNullableJSON updates a nullable JSON field
 func UpdateNullableJSON(target *[]byte, input []byte) {
-	if input == nil || len(input) == 0 {
+	if len(input) == 0 {
 		*target = nil
 	} else {
 		*target = input
