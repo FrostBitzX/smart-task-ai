@@ -179,3 +179,104 @@ func (s *ProjectService) deleteProjectCheck(ctx context.Context, projectID uuid.
 
 	return nil
 }
+
+func (s *ProjectService) AddMember(ctx context.Context, projectID uuid.UUID, accountID uuid.UUID, role string, nodeID string) (*entity.ProjectMember, error) {
+	// Parse nodeID
+	nodeUUID, err := uuid.Parse(nodeID)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	// Check if project exists
+	_, err = s.repo.GetProjectByID(ctx, projectID, nodeUUID)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
+		}
+		return nil, apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
+	}
+
+	// Check if member already exists
+	_, err = s.repo.GetProjectMember(ctx, projectID, accountID, nodeUUID)
+	if err == nil {
+		return nil, apperror.NewBadRequestError("member already exists in project", "MEMBER_ALREADY_EXISTS", nil)
+	}
+	if !errors.Is(err, apperror.ErrRecordNotFound) {
+		return nil, apperror.NewInternalServerError("failed to check member", "CHECK_MEMBER_ERROR", err)
+	}
+
+	// Validate role
+	if role != "owner" && role != "member" {
+		role = "member"
+	}
+
+	now := time.Now()
+	member := &entity.ProjectMember{
+		ProjectID: projectID,
+		AccountID: accountID,
+		NodeID:    nodeUUID,
+		Role:      role,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	err = s.repo.AddMember(ctx, member)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to add member", "ADD_MEMBER_ERROR", err)
+	}
+
+	return member, nil
+}
+
+func (s *ProjectService) RemoveMember(ctx context.Context, projectID uuid.UUID, accountID uuid.UUID, nodeID string) error {
+	// Parse nodeID
+	nodeUUID, err := uuid.Parse(nodeID)
+	if err != nil {
+		return apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	// Check if member exists
+	member, err := s.repo.GetProjectMember(ctx, projectID, accountID, nodeUUID)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return apperror.NewNotFoundError("member not found in project", "MEMBER_NOT_FOUND", err)
+		}
+		return apperror.NewInternalServerError("failed to get member", "GET_MEMBER_ERROR", err)
+	}
+
+	// Prevent removing owner
+	if member.Role == "owner" {
+		return apperror.NewBadRequestError("cannot remove project owner", "CANNOT_REMOVE_OWNER", nil)
+	}
+
+	err = s.repo.RemoveMember(ctx, projectID, accountID, nodeUUID)
+	if err != nil {
+		return apperror.NewInternalServerError("failed to remove member", "REMOVE_MEMBER_ERROR", err)
+	}
+
+	return nil
+}
+
+func (s *ProjectService) ListProjectMembers(ctx context.Context, projectID uuid.UUID, nodeID string) ([]*entity.ProjectMember, error) {
+	// Parse nodeID
+	nodeUUID, err := uuid.Parse(nodeID)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	// Check if project exists
+	_, err = s.repo.GetProjectByID(ctx, projectID, nodeUUID)
+	if err != nil {
+		if errors.Is(err, apperror.ErrRecordNotFound) {
+			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
+		}
+		return nil, apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
+	}
+
+	members, err := s.repo.ListProjectMembers(ctx, projectID, nodeUUID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to list members", "LIST_MEMBERS_ERROR", err)
+	}
+
+	return members, nil
+}

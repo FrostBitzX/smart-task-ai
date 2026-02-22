@@ -69,3 +69,32 @@ func (r *projectRepository) DeleteProject(ctx context.Context, projectID uuid.UU
 		Where("id = ? AND node_id = ?", projectID, nodeID).
 		Delete(&entity.Project{}).Error
 }
+
+func (r *projectRepository) AddMember(ctx context.Context, member *entity.ProjectMember) error {
+	return r.db.WithContext(ctx).Create(member).Error
+}
+
+func (r *projectRepository) RemoveMember(ctx context.Context, projectID uuid.UUID, accountID uuid.UUID, nodeID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("project_id = ? AND account_id = ? AND node_id = ? AND role != ?", projectID, accountID, nodeID, "owner").
+		Delete(&entity.ProjectMember{}).Error
+}
+
+func (r *projectRepository) GetProjectMember(ctx context.Context, projectID uuid.UUID, accountID uuid.UUID, nodeID uuid.UUID) (*entity.ProjectMember, error) {
+	var member entity.ProjectMember
+	err := r.db.WithContext(ctx).
+		Where("project_id = ? AND account_id = ? AND node_id = ?", projectID, accountID, nodeID).
+		First(&member).Error
+	if err != nil {
+		return nil, err
+	}
+	return &member, nil
+}
+
+func (r *projectRepository) ListProjectMembers(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) ([]*entity.ProjectMember, error) {
+	var members []*entity.ProjectMember
+	err := r.db.WithContext(ctx).
+		Where("project_id = ? AND node_id = ?", projectID, nodeID).
+		Find(&members).Error
+	return members, err
+}

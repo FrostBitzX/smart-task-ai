@@ -1,0 +1,69 @@
+openapi: 3.0.3
+components:
+  schemas:
+    AddMemberRequest:
+      type: object
+      required:
+        - account_id
+      properties:
+        account_id:
+          type: string
+          description: Account ID with prefix (e.g., acc_xxx)
+          pattern: "^acc_[a-zA-Z0-9]+$"
+          example: acc_abc123
+        role:
+          type: string
+          description: Member role in the project
+          enum:
+            - owner
+            - member
+          default: member
+          example: member
+
+    AddMemberResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          description: Project ID with prefix
+          example: proj_xyz789
+        account_id:
+          type: string
+          description: Account ID with prefix
+          example: acc_abc123
+        role:
+          type: string
+          description: Member role
+          example: member
+
+    RemoveMemberResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          description: Project ID with prefix
+          example: proj_xyz789
+        account_id:
+          type: string
+          description: Account ID with prefix
+          example: acc_abc123
+
+    ProjectMember:
+      type: object
+      properties:
+        account_id:
+          type: string
+          description: Account ID with prefix
+          example: acc_abc123
+        role:
+          type: string
+          description: Member role in the project
+          enum:
+            - owner
+            - member
+          example: member
+        created_at:
+          type: string
+          format: date-time
+          description: When the member was added to the project
+          example: "2024-01-15T10:30:00Z"
