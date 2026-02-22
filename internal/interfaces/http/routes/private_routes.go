@@ -51,12 +51,18 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	getProjectByIDUC := projectUC.NewGetProjectByIDUseCase(projectService, log)
 	updateProjectUC := projectUC.NewUpdateProjectUseCase(projectService, log)
 	deleteProjectUC := projectUC.NewDeleteProjectUseCase(projectService, log)
+	addMemberUC := projectUC.NewAddMemberUseCase(projectService, accountRepository, log)
+	removeMemberUC := projectUC.NewRemoveMemberUseCase(projectService, log)
+	listMembersUC := projectUC.NewListProjectMembersUseCase(projectService, log)
 	projectHandlerInstance := handler.NewProjectHandler(
 		createProjectUC,
 		listProjectByAccountUC,
 		getProjectByIDUC,
 		updateProjectUC,
 		deleteProjectUC,
+		addMemberUC,
+		removeMemberUC,
+		listMembersUC,
 		log,
 	)
 
@@ -66,6 +72,9 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	api.Get("/projects/:projectId", projectHandlerInstance.GetProject)
 	api.Patch("/projects/:projectId", projectHandlerInstance.UpdateProject)
 	api.Delete("/projects/:projectId", projectHandlerInstance.DeleteProject)
+	api.Post("/projects/:projectId/members", projectHandlerInstance.AddMember)
+	api.Delete("/projects/:projectId/members/:accountId", projectHandlerInstance.RemoveMember)
+	api.Get("/projects/:projectId/members", projectHandlerInstance.ListMembers)
 
 	// Task setup
 	taskService := taskDomain.NewTaskService(taskRepository, projectRepository)

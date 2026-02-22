@@ -16,6 +16,9 @@ type ProjectHandler struct {
 	GetProjectByIDUC       *usecase.GetProjectByIDUseCase
 	UpdateProjectUC        *usecase.UpdateProjectUseCase
 	DeleteProjectUC        *usecase.DeleteProjectUseCase
+	AddMemberUC            *usecase.AddMemberUseCase
+	RemoveMemberUC         *usecase.RemoveMemberUseCase
+	ListMembersUC          *usecase.ListProjectMembersUseCase
 	logger                 logger.Logger
 }
 
@@ -25,6 +28,9 @@ func NewProjectHandler(
 	get *usecase.GetProjectByIDUseCase,
 	update *usecase.UpdateProjectUseCase,
 	delete *usecase.DeleteProjectUseCase,
+	addMember *usecase.AddMemberUseCase,
+	removeMember *usecase.RemoveMemberUseCase,
+	listMembers *usecase.ListProjectMembersUseCase,
 	l logger.Logger,
 ) *ProjectHandler {
 	return &ProjectHandler{
@@ -33,6 +39,9 @@ func NewProjectHandler(
 		GetProjectByIDUC:       get,
 		UpdateProjectUC:        update,
 		DeleteProjectUC:        delete,
+		AddMemberUC:            addMember,
+		RemoveMemberUC:         removeMember,
+		ListMembersUC:          listMembers,
 		logger:                 l,
 	}
 }
@@ -203,4 +212,105 @@ func (h *ProjectHandler) DeleteProject(c *fiber.Ctx) error {
 	}
 
 	return responses.Success(c, data, "Project deleted successfully")
+}
+
+func (h *ProjectHandler) AddMember(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	req, err := requests.ParseAndValidate[project.AddMemberRequest](c)
+	if err != nil {
+		h.logger.Warn("Invalid request data", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return responses.Error(c, err)
+	}
+
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	req.ProjectID = projectID
+
+	data, err := h.AddMemberUC.Execute(c.Context(), req, nodeID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Member added successfully")
+}
+
+func (h *ProjectHandler) RemoveMember(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	accountID := c.Params("accountId")
+	if accountID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing accountId", "MISSING_ACCOUNT_ID", nil))
+	}
+
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	req := &project.RemoveMemberRequest{
+		ProjectID: projectID,
+		AccountID: accountID,
+	}
+
+	data, err := h.RemoveMemberUC.Execute(c.Context(), req, nodeID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Member removed successfully")
+}
+
+func (h *ProjectHandler) ListMembers(c *fiber.Ctx) error {
+	projectID := c.Params("projectId")
+	if projectID == "" {
+		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
+	}
+
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.ListMembersUC.Execute(c.Context(), projectID, nodeID)
+	if err != nil {
+		return responses.Error(c, err)
+	}
+
+	return responses.Success(c, data, "Members retrieved successfully")
 }

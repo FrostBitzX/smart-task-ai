@@ -4,28 +4,28 @@ info:
   version: 1.0.0
   description: |
     API for managing services with multi-tenant isolation.
-    
+
     ## Multi-Tenant Isolation
-    
+
     This API implements tenant isolation using a `node_id` identifier. Each account is assigned
     a unique `node_id` during signup, which serves as the tenant identifier.
-    
+
     ### Authentication & Authorization
-    
+
     - All authenticated endpoints require a JWT bearer token in the Authorization header
     - The JWT token contains both `AccountId` and `NodeId` claims
     - All data access operations are automatically filtered by the authenticated user's `node_id`
     - Cross-tenant access attempts will result in 403 Forbidden or 404 Not Found responses
-    
+
     ### Data Isolation
-    
+
     The following resources are tenant-isolated:
     - Projects: Only projects belonging to your `node_id` are accessible
     - Tasks: Only tasks within projects of your `node_id` are accessible
     - Profiles: Only profiles associated with your `node_id` are accessible
-    
+
     ### Error Responses
-    
+
     - **401 Unauthorized**: Missing or invalid JWT token, missing/invalid `node_id` in token
     - **403 Forbidden**: Cross-tenant access attempt detected
     - **404 Not Found**: Resource not found or belongs to a different tenant
@@ -41,16 +41,16 @@ components:
       bearerFormat: JWT
       description: |
         JWT token obtained from the login endpoint.
-        
+
         The token must contain the following claims:
         - AccountId: User's account identifier
         - NodeId: Tenant identifier for multi-tenant isolation
         - Email: User's email address
         - Username: User's username
         - Exp: Token expiration timestamp
-        
+
         Include the token in the Authorization header as: `Bearer <token>`
-        
+
         All authenticated endpoints automatically filter data by the NodeId claim
         to ensure tenant isolation.
 
@@ -103,6 +103,12 @@ paths:
   /api/projects/{projectId}:
     $ref: "./resources/project/paths/item.yml#/paths/~1api~1projects~1{projectId}"
 
+  /api/projects/{projectId}/members:
+    $ref: "./resources/project/paths/members.yml#/paths/~1api~1projects~1{projectId}~1members"
+
+  /api/projects/{projectId}/members/{accountId}:
+    $ref: "./resources/project/paths/members.yml#/paths/~1api~1projects~1{projectId}~1members~1{accountId}"
+
   # Task endpoints
   /api/{projectId}/tasks:
     $ref: "./resources/task/paths/item.yml#/paths/~1api~1{projectId}~1tasks"
@@ -130,4 +136,3 @@ paths:
 
   /api/files/avatar/upload:
     $ref: "./resources/file/paths/avatar.yml#/paths/~1api~1files~1avatar~1upload"
-

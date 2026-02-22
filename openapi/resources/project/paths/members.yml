@@ -1,0 +1,148 @@
+openapi: 3.0.3
+paths:
+  /api/projects/{projectId}/members:
+    get:
+      operationId: ListProjectMembers
+      summary: List project members
+      description: Retrieve all members of a project
+      tags:
+        - Projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID with prefix (e.g., proj_xxx)
+          schema:
+            type: string
+            pattern: "^proj_[a-zA-Z0-9]+$"
+      responses:
+        "200":
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Members retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      members:
+                        type: array
+                        items:
+                          $ref: "../schemas/member.yml#/components/schemas/ProjectMember"
+                  error:
+                    type: "null"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../../shared/responses/not_found.yml#/components/responses/NotFound"
+        "500":
+          $ref: "../../../shared/responses/internal_server_error.yml#/components/responses/InternalServerError"
+
+    post:
+      operationId: AddProjectMember
+      summary: Add member to project
+      description: Add a new member to a project with specified role
+      tags:
+        - Projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID with prefix (e.g., proj_xxx)
+          schema:
+            type: string
+            pattern: "^proj_[a-zA-Z0-9]+$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/member.yml#/components/schemas/AddMemberRequest"
+      responses:
+        "200":
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Member added successfully
+                  data:
+                    $ref: "../schemas/member.yml#/components/schemas/AddMemberResponse"
+                  error:
+                    type: "null"
+        "400":
+          $ref: "../../../shared/responses/bad_request.yml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../../shared/responses/not_found.yml#/components/responses/NotFound"
+        "500":
+          $ref: "../../../shared/responses/internal_server_error.yml#/components/responses/InternalServerError"
+
+  /api/projects/{projectId}/members/{accountId}:
+    delete:
+      operationId: RemoveProjectMember
+      summary: Remove member from project
+      description: Remove a member from a project (cannot remove owner)
+      tags:
+        - Projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Project ID with prefix (e.g., proj_xxx)
+          schema:
+            type: string
+            pattern: "^proj_[a-zA-Z0-9]+$"
+        - name: accountId
+          in: path
+          required: true
+          description: Account ID with prefix (e.g., acc_xxx)
+          schema:
+            type: string
+            pattern: "^acc_[a-zA-Z0-9]+$"
+      responses:
+        "200":
+          description: Member removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Member removed successfully
+                  data:
+                    $ref: "../schemas/member.yml#/components/schemas/RemoveMemberResponse"
+                  error:
+                    type: "null"
+        "400":
+          $ref: "../../../shared/responses/bad_request.yml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../../shared/responses/not_found.yml#/components/responses/NotFound"
+        "500":
+          $ref: "../../../shared/responses/internal_server_error.yml#/components/responses/InternalServerError"
