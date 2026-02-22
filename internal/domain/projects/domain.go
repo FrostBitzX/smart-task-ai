@@ -34,17 +34,13 @@ func FromProjectModel(p *entity.Project) *Project {
 
 	proj := &Project{
 		ID:        p.ID.String(),
-		NodeID:    "",
+		NodeID:    p.NodeID.String(),
 		AccountID: p.AccountID.String(),
 		Role:      Role{Owner: p.Role, Member: p.Role},
 		Name:      p.Name,
 		Config:    p.Config,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
-	}
-
-	if p.NodeID != nil {
-		proj.NodeID = p.NodeID.String()
 	}
 
 	return proj

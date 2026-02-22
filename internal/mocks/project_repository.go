@@ -42,6 +42,20 @@ func (m *MockProjectRepository) EXPECT() *MockProjectRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddMember mocks base method.
+func (m *MockProjectRepository) AddMember(ctx context.Context, member *entity.ProjectMember) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMember", ctx, member)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMember indicates an expected call of AddMember.
+func (mr *MockProjectRepositoryMockRecorder) AddMember(ctx, member any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMember", reflect.TypeOf((*MockProjectRepository)(nil).AddMember), ctx, member)
+}
+
 // CreateProject mocks base method.
 func (m *MockProjectRepository) CreateProject(ctx context.Context, proj *entity.Project) error {
 	m.ctrl.T.Helper()
@@ -57,38 +71,53 @@ func (mr *MockProjectRepositoryMockRecorder) CreateProject(ctx, proj any) *gomoc
 }
 
 // DeleteProject mocks base method.
-func (m *MockProjectRepository) DeleteProject(ctx context.Context, projectID uuid.UUID) error {
+func (m *MockProjectRepository) DeleteProject(ctx context.Context, projectID, nodeID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteProject", ctx, projectID)
+	ret := m.ctrl.Call(m, "DeleteProject", ctx, projectID, nodeID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteProject indicates an expected call of DeleteProject.
-func (mr *MockProjectRepositoryMockRecorder) DeleteProject(ctx, projectID any) *gomock.Call {
+func (mr *MockProjectRepositoryMockRecorder) DeleteProject(ctx, projectID, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockProjectRepository)(nil).DeleteProject), ctx, projectID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockProjectRepository)(nil).DeleteProject), ctx, projectID, nodeID)
 }
 
 // GetProjectByID mocks base method.
-func (m *MockProjectRepository) GetProjectByID(ctx context.Context, projectID uuid.UUID) (*entity.Project, error) {
+func (m *MockProjectRepository) GetProjectByID(ctx context.Context, projectID, nodeID uuid.UUID) (*entity.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProjectByID", ctx, projectID)
+	ret := m.ctrl.Call(m, "GetProjectByID", ctx, projectID, nodeID)
 	ret0, _ := ret[0].(*entity.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetProjectByID indicates an expected call of GetProjectByID.
-func (mr *MockProjectRepositoryMockRecorder) GetProjectByID(ctx, projectID any) *gomock.Call {
+func (mr *MockProjectRepositoryMockRecorder) GetProjectByID(ctx, projectID, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectByID", reflect.TypeOf((*MockProjectRepository)(nil).GetProjectByID), ctx, projectID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectByID", reflect.TypeOf((*MockProjectRepository)(nil).GetProjectByID), ctx, projectID, nodeID)
+}
+
+// GetProjectMember mocks base method.
+func (m *MockProjectRepository) GetProjectMember(ctx context.Context, projectID, accountID, nodeID uuid.UUID) (*entity.ProjectMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectMember", ctx, projectID, accountID, nodeID)
+	ret0, _ := ret[0].(*entity.ProjectMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectMember indicates an expected call of GetProjectMember.
+func (mr *MockProjectRepositoryMockRecorder) GetProjectMember(ctx, projectID, accountID, nodeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectMember", reflect.TypeOf((*MockProjectRepository)(nil).GetProjectMember), ctx, projectID, accountID, nodeID)
 }
 
 // ListProjectByAccountID mocks base method.
-func (m *MockProjectRepository) ListProjectByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Project, int, error) {
+func (m *MockProjectRepository) ListProjectByAccountID(ctx context.Context, accountID, nodeID uuid.UUID, limit, offset int) ([]*entity.Project, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProjectByAccountID", ctx, accountID, limit, offset)
+	ret := m.ctrl.Call(m, "ListProjectByAccountID", ctx, accountID, nodeID, limit, offset)
 	ret0, _ := ret[0].([]*entity.Project)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -96,21 +125,50 @@ func (m *MockProjectRepository) ListProjectByAccountID(ctx context.Context, acco
 }
 
 // ListProjectByAccountID indicates an expected call of ListProjectByAccountID.
-func (mr *MockProjectRepositoryMockRecorder) ListProjectByAccountID(ctx, accountID, limit, offset any) *gomock.Call {
+func (mr *MockProjectRepositoryMockRecorder) ListProjectByAccountID(ctx, accountID, nodeID, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectByAccountID", reflect.TypeOf((*MockProjectRepository)(nil).ListProjectByAccountID), ctx, accountID, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectByAccountID", reflect.TypeOf((*MockProjectRepository)(nil).ListProjectByAccountID), ctx, accountID, nodeID, limit, offset)
+}
+
+// ListProjectMembers mocks base method.
+func (m *MockProjectRepository) ListProjectMembers(ctx context.Context, projectID, nodeID uuid.UUID) ([]*entity.ProjectMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProjectMembers", ctx, projectID, nodeID)
+	ret0, _ := ret[0].([]*entity.ProjectMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProjectMembers indicates an expected call of ListProjectMembers.
+func (mr *MockProjectRepositoryMockRecorder) ListProjectMembers(ctx, projectID, nodeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectMembers", reflect.TypeOf((*MockProjectRepository)(nil).ListProjectMembers), ctx, projectID, nodeID)
+}
+
+// RemoveMember mocks base method.
+func (m *MockProjectRepository) RemoveMember(ctx context.Context, projectID, accountID, nodeID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveMember", ctx, projectID, accountID, nodeID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveMember indicates an expected call of RemoveMember.
+func (mr *MockProjectRepositoryMockRecorder) RemoveMember(ctx, projectID, accountID, nodeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveMember", reflect.TypeOf((*MockProjectRepository)(nil).RemoveMember), ctx, projectID, accountID, nodeID)
 }
 
 // UpdateProject mocks base method.
-func (m *MockProjectRepository) UpdateProject(ctx context.Context, proj *entity.Project) error {
+func (m *MockProjectRepository) UpdateProject(ctx context.Context, proj *entity.Project, nodeID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProject", ctx, proj)
+	ret := m.ctrl.Call(m, "UpdateProject", ctx, proj, nodeID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateProject indicates an expected call of UpdateProject.
-func (mr *MockProjectRepositoryMockRecorder) UpdateProject(ctx, proj any) *gomock.Call {
+func (mr *MockProjectRepositoryMockRecorder) UpdateProject(ctx, proj, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProject", reflect.TypeOf((*MockProjectRepository)(nil).UpdateProject), ctx, proj)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProject", reflect.TypeOf((*MockProjectRepository)(nil).UpdateProject), ctx, proj, nodeID)
 }

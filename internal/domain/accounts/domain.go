@@ -31,16 +31,12 @@ func FromAccountModel(m *entity.Account) *Account {
 
 	acc := &Account{
 		ID:        m.ID.String(),
-		NodeID:    "",
+		NodeID:    m.NodeID.String(),
 		Username:  m.Username,
 		Email:     m.Email,
 		State:     State{Active: m.State, Inactive: m.State},
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
-	}
-
-	if m.NodeID != nil {
-		acc.NodeID = m.NodeID.String()
 	}
 
 	return acc

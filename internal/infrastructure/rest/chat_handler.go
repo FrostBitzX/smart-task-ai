@@ -43,36 +43,35 @@ func (h *ChatHandler) SendMessage(c *fiber.Ctx) error {
 	// Set projectID from URL parameter
 	req.ProjectID = projectID
 
-	// Get account ID from JWT claims
-	accountID, err := h.getAccountIDFromContext(c)
-	if err != nil {
-		return responses.Error(c, err)
+	// Get AccountID and NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	resp, err := h.sendMessageUC.Execute(c.Context(), accountID, req)
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	resp, err := h.sendMessageUC.Execute(c.Context(), accountID, nodeID, req)
 	if err != nil {
 		h.logger.Error("Failed to send message", map[string]interface{}{
 			"error":      err.Error(),
 			"account_id": accountID,
+			"node_id":    nodeID,
 			"project_id": req.ProjectID,
 		})
 		return responses.Error(c, err)
 	}
 
 	return responses.Success(c, resp, "Message sent successfully")
-}
-
-// getAccountIDFromContext extracts account ID from JWT claims in context
-func (h *ChatHandler) getAccountIDFromContext(c *fiber.Ctx) (string, error) {
-	claims, ok := c.Locals("jwt_claims").(map[string]interface{})
-	if !ok {
-		return "", apperror.NewUnauthorizedError("authentication required", "UNAUTHORIZED", nil)
-	}
-
-	accountID, ok := claims["AccountId"].(string)
-	if !ok || accountID == "" {
-		return "", apperror.NewUnauthorizedError("invalid token claims", "INVALID_TOKEN_CLAIMS", nil)
-	}
-
-	return accountID, nil
 }

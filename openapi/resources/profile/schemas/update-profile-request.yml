@@ -12,7 +12,6 @@ properties:
     example: "Doe"
   nickname:
     type: string
-    minLength: 3
     maxLength: 20
     example: "John"
   avatar_path:

@@ -23,13 +23,13 @@ func NewGetTaskByIDUseCase(svc *service.TaskService, l logger.Logger) *GetTaskBy
 	}
 }
 
-func (uc *GetTaskByIDUseCase) Execute(ctx context.Context, taskID string) (*task.GetTaskByIDResponse, error) {
+func (uc *GetTaskByIDUseCase) Execute(ctx context.Context, taskID string, nodeID string) (*task.GetTaskByIDResponse, error) {
 	parsedTaskID, err := utils.ParseID(taskID, entity.TaskIDPrefix)
 	if err != nil {
 		return nil, apperror.NewBadRequestError("invalid task ID format", "INVALID_TASK_ID", err)
 	}
 
-	tsk, err := uc.taskService.GetTaskByID(ctx, parsedTaskID)
+	tsk, err := uc.taskService.GetTaskByID(ctx, parsedTaskID, nodeID)
 	if err != nil {
 		return nil, err
 	}

@@ -23,12 +23,12 @@ func NewCreateProjectUseCase(svc *service.ProjectService, l logger.Logger) *Crea
 	}
 }
 
-func (uc *CreateProjectUseCase) Execute(ctx context.Context, req *project.CreateProjectRequest) (*project.CreateProjectResponse, error) {
+func (uc *CreateProjectUseCase) Execute(ctx context.Context, req *project.CreateProjectRequest, nodeID string) (*project.CreateProjectResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	prof, err := uc.projectService.CreateProject(ctx, req)
+	prof, err := uc.projectService.CreateProject(ctx, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

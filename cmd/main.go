@@ -74,10 +74,8 @@ func main() {
 	routes.RegisterPublicRoutes(app, db, zapLogger)
 	routes.RegisterPrivateRoutes(app, db, zapLogger)
 
-	addr := ":8080"
-	if port := os.Getenv("PORT"); port != "" {
-		addr = ":" + port
-	}
+	port := os.Getenv("PORT")
+	addr := ":" + port
 
 	// Graceful shutdown
 	go func() {

@@ -24,12 +24,12 @@ func NewCreateProfileUseCase(svc *service.ProfileService, l logger.Logger) *Crea
 	}
 }
 
-func (uc *CreateProfileUseCase) Execute(ctx context.Context, req *profile.CreateProfileRequest) (*profile.CreateProfileResponse, error) {
+func (uc *CreateProfileUseCase) Execute(ctx context.Context, req *profile.CreateProfileRequest, nodeID string) (*profile.CreateProfileResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	prof, err := uc.profileService.CreateProfile(ctx, req)
+	prof, err := uc.profileService.CreateProfile(ctx, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

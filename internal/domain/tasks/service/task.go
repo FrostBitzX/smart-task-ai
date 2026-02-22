@@ -7,6 +7,7 @@ import (
 
 	"github.com/FrostBitzX/smart-task-ai/internal/application/task"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
+	"github.com/FrostBitzX/smart-task-ai/pkg/utils"
 	"github.com/google/uuid"
 
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects"
@@ -26,13 +27,19 @@ func NewTaskService(repo tasks.TaskRepository, projectRepo projects.ProjectRepos
 	}
 }
 
-func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *task.CreateTaskRequest) (*entity.Task, error) {
+func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *task.CreateTaskRequest, nodeIDStr string) (*entity.Task, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Validate that project exists
-	_, err := s.projectRepo.GetProjectByID(ctx, projectID)
+	// Parse nodeID
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	// Validate that project exists and belongs to the same node_id
+	_, err = s.projectRepo.GetProjectByID(ctx, projectID, nodeID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
@@ -48,6 +55,7 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	now := time.Now()
 	task := &entity.Task{
 		ID:            uuid.New(),
+		NodeID:        nodeID,
 		ProjectID:     projectID,
 		Name:          req.Name,
 		Priority:      req.Priority,
@@ -83,8 +91,14 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	return task, nil
 }
 
-func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error) {
-	tsk, err := s.repo.GetTaskByID(ctx, taskID)
+func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID, nodeIDStr string) (*entity.Task, error) {
+	// Parse nodeID
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	tsk, err := s.repo.GetTaskByID(ctx, taskID, nodeID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
@@ -95,8 +109,14 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entit
 	return tsk, nil
 }
 
-func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
-	tasks, err := s.repo.ListTasksByProject(ctx, projectID)
+func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUID, nodeIDStr string) ([]*entity.Task, error) {
+	// Parse nodeID
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	tasks, err := s.repo.ListTasksByProject(ctx, projectID, nodeID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to list tasks", "LIST_TASKS_ERROR", err)
 	}
@@ -104,9 +124,15 @@ func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUI
 	return tasks, nil
 }
 
-func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *task.UpdateTaskRequest) (*entity.Task, error) {
+func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *task.UpdateTaskRequest, nodeIDStr string) (*entity.Task, error) {
+	// Parse nodeID
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
 	// Get task by ID for update
-	tsk, err := s.repo.GetTaskByID(ctx, taskID)
+	tsk, err := s.repo.GetTaskByID(ctx, taskID, nodeID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
@@ -131,30 +157,21 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	if req.Status != nil {
 		tsk.Status = *req.Status
 	}
-	if req.Description != nil {
-		tsk.Description = req.Description
-	}
 	if req.Priority != "" {
 		tsk.Priority = req.Priority
 	}
-	if req.Location != nil {
-		tsk.Location = req.Location
-	}
-	if req.RecurringDays != nil {
-		tsk.RecurringDays = req.RecurringDays
-	}
-	if req.RecurringUntil != nil {
-		tsk.RecurringUntil = req.RecurringUntil
-	}
-	if req.StartDateTime != nil {
-		tsk.StartDateTime = req.StartDateTime
-	}
-	if req.EndDateTime != nil {
-		tsk.EndDateTime = req.EndDateTime
-	}
+
+	// Nullable fields
+	utils.UpdateNullableString(&tsk.Description, req.Description)
+	utils.UpdateNullableString(&tsk.Location, req.Location)
+	utils.UpdateNullableString(&tsk.StartDateTime, req.StartDateTime)
+	utils.UpdateNullableString(&tsk.EndDateTime, req.EndDateTime)
+	utils.UpdateNullableInt(&tsk.RecurringDays, req.RecurringDays)
+	utils.UpdateNullableString(&tsk.RecurringUntil, req.RecurringUntil)
+
 	tsk.UpdatedAt = time.Now()
 
-	err = s.repo.UpdateTask(ctx, tsk)
+	err = s.repo.UpdateTask(ctx, tsk, nodeID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to update task", "UPDATE_TASK_ERROR", err)
 	}
@@ -162,8 +179,14 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	return tsk, nil
 }
 
-func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
-	_, err := s.repo.GetTaskByID(ctx, taskID)
+func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeIDStr string) error {
+	// Parse nodeID
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+	}
+
+	_, err = s.repo.GetTaskByID(ctx, taskID, nodeID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
@@ -171,12 +194,60 @@ func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
 		return apperror.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
 	}
 
-	err = s.repo.DeleteTask(ctx, taskID)
+	err = s.repo.DeleteTask(ctx, taskID, nodeID)
 	if err != nil {
 		return apperror.NewInternalServerError("failed to delete task", "DELETE_TASK_ERROR", err)
 	}
 
 	return nil
+}
+
+func (s *TaskService) GetTaskStatistics(ctx context.Context, nodeID uuid.UUID) (*tasks.TaskStatistics, error) {
+	status, err := s.repo.CountTasksByStatus(ctx, nodeID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to get task statistics", "GET_STATISTICS_ERROR", err)
+	}
+
+	// Convert slice of StatusCount to TaskStatistics struct
+	statistics := &tasks.TaskStatistics{
+		Todo:       0,
+		InProgress: 0,
+		InReview:   0,
+		Done:       0,
+	}
+
+	for _, sc := range status {
+		switch sc.Status {
+		case "todo":
+			statistics.Todo = sc.Count
+		case "in_progress":
+			statistics.InProgress = sc.Count
+		case "in_review":
+			statistics.InReview = sc.Count
+		case "done":
+			statistics.Done = sc.Count
+		}
+	}
+
+	return statistics, nil
+}
+
+func (s *TaskService) GetUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error) {
+	tasks, err := s.repo.ListUnscheduledTasks(ctx, nodeID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to get unscheduled tasks", "GET_UNSCHEDULED_TASKS_ERROR", err)
+	}
+
+	return tasks, nil
+}
+
+func (s *TaskService) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error) {
+	tasks, err := s.repo.ListTodayTasks(ctx, nodeID, today)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to list today's tasks", "LIST_TODAY_TASKS_ERROR", err)
+	}
+
+	return tasks, nil
 }
 
 func (s *TaskService) validateTimeRange(startStr, endStr *string) error {

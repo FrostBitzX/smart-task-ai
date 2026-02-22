@@ -52,7 +52,20 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
 
-	data, err := h.CreateTaskUC.Execute(c.Context(), projectID, req)
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.CreateTaskUC.Execute(c.Context(), projectID, req, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -66,7 +79,20 @@ func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
-	data, err := h.GetTaskByIDUC.Execute(c.Context(), taskID)
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.GetTaskByIDUC.Execute(c.Context(), taskID, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -80,7 +106,20 @@ func (h *TaskHandler) ListTasksByProject(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("project ID is required", "INVALID_PROJECT_ID", nil))
 	}
 
-	data, err := h.ListTasksByProjectUC.Execute(c.Context(), projectID)
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.ListTasksByProjectUC.Execute(c.Context(), projectID, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -102,7 +141,20 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
-	data, err := h.UpdateTaskUC.Execute(c.Context(), taskID, req)
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.UpdateTaskUC.Execute(c.Context(), taskID, req, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -116,7 +168,20 @@ func (h *TaskHandler) DeleteTask(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("task ID is required", "INVALID_TASK_ID", nil))
 	}
 
-	deletedID, err := h.DeleteTaskUC.Execute(c.Context(), taskID)
+	// Get NodeID from JWT claims
+	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
+	if !ok {
+		h.logger.Error("Invalid JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	nodeID, ok := jwtClaims["NodeId"].(string)
+	if !ok || nodeID == "" {
+		h.logger.Error("Missing NodeId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	deletedID, err := h.DeleteTaskUC.Execute(c.Context(), taskID, nodeID)
 	if err != nil {
 		return responses.Error(c, err)
 	}

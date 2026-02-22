@@ -12,9 +12,10 @@ import (
 )
 
 func UploadImage(ctx context.Context, file multipart.File, filename string) error {
+	region := os.Getenv("S3_REGION")
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
-		config.WithRegion(os.Getenv("S3_REGION")),
+		config.WithRegion(region),
 		config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(
 				os.Getenv("S3_ACCESS_KEY"),
@@ -32,8 +33,10 @@ func UploadImage(ctx context.Context, file multipart.File, filename string) erro
 		o.UsePathStyle = true
 	})
 
+	bucket := os.Getenv("S3_BUCKET")
+
 	_, err = client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(os.Getenv("S3_BUCKET")),
+		Bucket: aws.String(bucket),
 		Key:    aws.String("images/" + filename),
 		Body:   file,
 	})

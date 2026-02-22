@@ -24,12 +24,12 @@ func NewUpdateProfileUseCase(svc *service.ProfileService, l logger.Logger) *Upda
 	}
 }
 
-func (uc *UpdateProfileUseCase) Execute(ctx context.Context, req *profile.UpdateProfileRequest) (*profile.UpdateProfileResponse, error) {
+func (uc *UpdateProfileUseCase) Execute(ctx context.Context, req *profile.UpdateProfileRequest, nodeID string) (*profile.UpdateProfileResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	prof, err := uc.profileService.UpdateProfile(ctx, req)
+	prof, err := uc.profileService.UpdateProfile(ctx, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

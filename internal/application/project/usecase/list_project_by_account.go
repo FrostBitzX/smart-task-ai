@@ -25,7 +25,7 @@ func NewListProjectByAccountUseCase(svc *service.ProjectService, l logger.Logger
 	}
 }
 
-func (uc *ListProjectByAccountUseCase) Execute(ctx context.Context, req *project.ListProjectRequest) (*project.ListProjectResponse, error) {
+func (uc *ListProjectByAccountUseCase) Execute(ctx context.Context, req *project.ListProjectRequest, nodeID string) (*project.ListProjectResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
@@ -39,7 +39,7 @@ func (uc *ListProjectByAccountUseCase) Execute(ctx context.Context, req *project
 	limit, offset := common.ValidatePagination(req.Limit, req.Offset)
 
 	// Get projects from service
-	projs, total, err := uc.projectService.ListProjectByAccountID(ctx, accountID, limit, offset)
+	projs, total, err := uc.projectService.ListProjectByAccountID(ctx, accountID, nodeID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

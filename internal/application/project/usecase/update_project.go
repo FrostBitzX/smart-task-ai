@@ -22,8 +22,8 @@ func NewUpdateProjectUseCase(svc *service.ProjectService, l logger.Logger) *Upda
 	}
 }
 
-func (uc *UpdateProjectUseCase) Execute(ctx context.Context, req *project.UpdateProjectRequest) (*project.UpdateProjectResponse, error) {
-	proj, err := uc.projectService.UpdateProject(ctx, req)
+func (uc *UpdateProjectUseCase) Execute(ctx context.Context, req *project.UpdateProjectRequest, nodeID string) (*project.UpdateProjectResponse, error) {
+	proj, err := uc.projectService.UpdateProject(ctx, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

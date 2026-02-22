@@ -53,3 +53,35 @@ type UpdateProjectResponse struct {
 type DeleteProjectResponse struct {
 	ProjectID string `json:"project_id"`
 }
+
+type AddMemberRequest struct {
+	ProjectID string `json:"-"`
+	Email     string `json:"email" validate:"required,email"`
+	Role      string `json:"role" validate:"omitempty,oneof=owner member"`
+}
+
+type AddMemberResponse struct {
+	ProjectID string `json:"project_id"`
+	AccountID string `json:"account_id"`
+	Role      string `json:"role"`
+}
+
+type RemoveMemberRequest struct {
+	ProjectID string `json:"-"`
+	AccountID string `json:"-"`
+}
+
+type RemoveMemberResponse struct {
+	ProjectID string `json:"project_id"`
+	AccountID string `json:"account_id"`
+}
+
+type ProjectMemberResponse struct {
+	AccountID string `json:"account_id"`
+	Role      string `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ListProjectMembersResponse struct {
+	Members []ProjectMemberResponse `json:"members"`
+}

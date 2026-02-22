@@ -24,7 +24,7 @@ func NewCreateTaskUseCase(svc *service.TaskService, l logger.Logger) *CreateTask
 	}
 }
 
-func (uc *CreateTaskUseCase) Execute(ctx context.Context, projectID string, req *task.CreateTaskRequest) (*task.CreateTaskResponse, error) {
+func (uc *CreateTaskUseCase) Execute(ctx context.Context, projectID string, req *task.CreateTaskRequest, nodeID string) (*task.CreateTaskResponse, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
@@ -34,7 +34,7 @@ func (uc *CreateTaskUseCase) Execute(ctx context.Context, projectID string, req 
 		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
-	tsk, err := uc.taskService.CreateTask(ctx, parsedProjectID, req)
+	tsk, err := uc.taskService.CreateTask(ctx, parsedProjectID, req, nodeID)
 	if err != nil {
 		return nil, err
 	}

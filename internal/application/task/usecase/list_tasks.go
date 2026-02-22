@@ -25,13 +25,13 @@ func NewListTasksByProjectUseCase(svc *service.TaskService, l logger.Logger) *Li
 	}
 }
 
-func (uc *ListTasksByProjectUseCase) Execute(ctx context.Context, projectID string) (*task.ListTasksByProjectResponse, error) {
+func (uc *ListTasksByProjectUseCase) Execute(ctx context.Context, projectID string, nodeID string) (*task.ListTasksByProjectResponse, error) {
 	parsedProjectID, err := utils.ParseID(projectID, entity.ProjectIDPrefix)
 	if err != nil {
 		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
-	tsks, err := uc.taskService.ListTasksByProject(ctx, parsedProjectID)
+	tsks, err := uc.taskService.ListTasksByProject(ctx, parsedProjectID, nodeID)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,8 @@ paths:
       description: Create a new project
       tags:
         - project
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -26,6 +28,8 @@ paths:
                   - $ref: "../../../shared/schemas/success.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
     get:
@@ -34,6 +38,8 @@ paths:
       description: List projects for the authenticated account
       tags:
         - project
+      security:
+        - bearerAuth: []
       parameters:
         - name: limit
           in: query
@@ -66,7 +72,10 @@ paths:
                         $ref: "../schemas/list-projects-response.yml"
         "400":
           $ref: "../../../shared/responses/bad-request.yml"
+        "401":
+          $ref: "../../../shared/responses/unauthorized.yml"
         "404":
           $ref: "../../../shared/responses/not-found.yml"
         "500":
           $ref: "../../../shared/responses/internal-server-error.yml"
+

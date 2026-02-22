@@ -55,31 +55,31 @@ func (mr *MockProfileRepositoryMockRecorder) CreateProfile(ctx, prof any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileRepository)(nil).CreateProfile), ctx, prof)
 }
 
-// GetProfileByAccountID mocks base method.
-func (m *MockProfileRepository) GetProfileByAccountID(ctx context.Context, accountID string) (*entity.Profile, error) {
+// GetProfile mocks base method.
+func (m *MockProfileRepository) GetProfile(ctx context.Context, accountID, nodeID string) (*entity.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProfileByAccountID", ctx, accountID)
+	ret := m.ctrl.Call(m, "GetProfile", ctx, accountID, nodeID)
 	ret0, _ := ret[0].(*entity.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetProfileByAccountID indicates an expected call of GetProfileByAccountID.
-func (mr *MockProfileRepositoryMockRecorder) GetProfileByAccountID(ctx, accountID any) *gomock.Call {
+// GetProfile indicates an expected call of GetProfile.
+func (mr *MockProfileRepositoryMockRecorder) GetProfile(ctx, accountID, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByAccountID", reflect.TypeOf((*MockProfileRepository)(nil).GetProfileByAccountID), ctx, accountID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfile", reflect.TypeOf((*MockProfileRepository)(nil).GetProfile), ctx, accountID, nodeID)
 }
 
 // UpdateProfile mocks base method.
-func (m *MockProfileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile) error {
+func (m *MockProfileRepository) UpdateProfile(ctx context.Context, prof *entity.Profile, nodeID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProfile", ctx, prof)
+	ret := m.ctrl.Call(m, "UpdateProfile", ctx, prof, nodeID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateProfile indicates an expected call of UpdateProfile.
-func (mr *MockProfileRepositoryMockRecorder) UpdateProfile(ctx, prof any) *gomock.Call {
+func (mr *MockProfileRepositoryMockRecorder) UpdateProfile(ctx, prof, nodeID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileRepository)(nil).UpdateProfile), ctx, prof)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileRepository)(nil).UpdateProfile), ctx, prof, nodeID)
 }

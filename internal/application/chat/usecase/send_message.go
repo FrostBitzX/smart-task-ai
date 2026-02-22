@@ -28,13 +28,13 @@ func NewSendMessageUseCase(cs chatSvc.ChatService, l logger.Logger) *SendMessage
 }
 
 // Execute sends a message to the AI assistant and returns a non-streaming response
-func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, req *chat.SendMessageRequestDTO) (*chat.SendMessageResponseDTO, error) {
+func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, nodeID string, req *chat.SendMessageRequestDTO) (*chat.SendMessageResponseDTO, error) {
 	serviceReq, err := uc.buildServiceRequest(accountID, req)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := uc.chatService.SendMessage(ctx, serviceReq)
+	resp, err := uc.chatService.SendMessage(ctx, serviceReq, nodeID)
 	if err != nil {
 		return nil, err
 	}

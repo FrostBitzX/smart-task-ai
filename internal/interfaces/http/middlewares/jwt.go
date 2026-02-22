@@ -18,7 +18,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "missing token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "MISSING_TOKEN",
 				},
 			})
@@ -32,7 +32,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token format",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN_FORMAT",
 				},
 			})
@@ -49,7 +49,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN",
 				},
 			})
@@ -62,7 +62,7 @@ func JWTMiddleware() fiber.Handler {
 				Message: "invalid token claims",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "INVALID_TOKEN_CLAIMS",
 				},
 			})
@@ -72,6 +72,7 @@ func JWTMiddleware() fiber.Handler {
 		username, _ := claims["Username"].(string)
 		accountID, _ := claims["AccountId"].(string)
 		email, _ := claims["Email"].(string)
+		nodeID, _ := claims["NodeId"].(string)
 
 		if accountID == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(responses.ErrorResponse{
@@ -79,8 +80,20 @@ func JWTMiddleware() fiber.Handler {
 				Message: "missing account id in token",
 				Data:    nil,
 				Error: responses.ErrorDetail{
-					Code:    fiber.StatusBadRequest,
+					Code:    fiber.StatusUnauthorized,
 					Message: "MISSING_ACCOUNT_ID",
+				},
+			})
+		}
+
+		if nodeID == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(responses.ErrorResponse{
+				Success: false,
+				Message: "missing node id in token",
+				Data:    nil,
+				Error: responses.ErrorDetail{
+					Code:    fiber.StatusUnauthorized,
+					Message: "MISSING_NODE_ID",
 				},
 			})
 		}
@@ -88,6 +101,7 @@ func JWTMiddleware() fiber.Handler {
 		// Save all claims into context (Locals)
 		c.Locals("jwt_claims", map[string]interface{}{
 			"AccountId": accountID,
+			"NodeId":    nodeID,
 			"Email":     email,
 			"Username":  username,
 		})

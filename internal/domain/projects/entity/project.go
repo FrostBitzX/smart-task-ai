@@ -12,7 +12,7 @@ const ProjectIDPrefix = "proj"
 
 type Project struct {
 	ID        uuid.UUID       `json:"id" gorm:"type:char(36);primaryKey"`
-	NodeID    *uuid.UUID      `json:"nodeId" gorm:"type:char(36)"`
+	NodeID    uuid.UUID       `json:"nodeId" gorm:"type:char(36);not null;index"`
 	AccountID uuid.UUID       `json:"accountId" gorm:"type:char(36);not null"`
 	Role      string          `json:"role" gorm:"type:enum('owner','member');not null"`
 	Name      string          `json:"name" gorm:"type:varchar(255);not null"`
