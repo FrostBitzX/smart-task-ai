@@ -22,21 +22,19 @@ func (r *taskRepository) CreateTask(ctx context.Context, task *entity.Task) erro
 	return r.db.WithContext(ctx).Create(task).Error
 }
 
-func (r *taskRepository) GetTaskByID(ctx context.Context, taskID uuid.UUID, nodeID uuid.UUID) (*entity.Task, error) {
+func (r *taskRepository) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error) {
 	var task entity.Task
-	err := r.db.WithContext(ctx).
-		Where("id = ? AND node_id = ?", taskID, nodeID).
-		First(&task).Error
+	err := r.db.WithContext(ctx).Where("id = ?", taskID).First(&task).Error
 	if err != nil {
 		return nil, err
 	}
 	return &task, nil
 }
 
-func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) ([]*entity.Task, error) {
+func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
 	var tasks []*entity.Task
 	err := r.db.WithContext(ctx).
-		Where("project_id = ? AND node_id = ?", projectID, nodeID).
+		Where("project_id = ?", projectID).
 		Find(&tasks).Error
 	if err != nil {
 		return nil, err
@@ -44,35 +42,35 @@ func (r *taskRepository) ListTasksByProject(ctx context.Context, projectID uuid.
 	return tasks, nil
 }
 
-func (r *taskRepository) CountTasksByProject(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) (int64, error) {
+func (r *taskRepository) CountTasksByProject(ctx context.Context, projectID uuid.UUID) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&entity.Task{}).
-		Where("project_id = ? AND node_id = ?", projectID, nodeID).
+		Where("project_id = ?", projectID).
 		Count(&count).Error
 	return count, err
 }
 
-func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task, nodeID uuid.UUID) error {
+func (r *taskRepository) UpdateTask(ctx context.Context, task *entity.Task) error {
 	return r.db.WithContext(ctx).
 		Model(&entity.Task{}).
 		Select("*").
-		Where("id = ? AND node_id = ?", task.ID, nodeID).
+		Where("id = ?", task.ID).
 		Updates(task).Error
 }
 
-func (r *taskRepository) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeID uuid.UUID) error {
+func (r *taskRepository) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
 	return r.db.WithContext(ctx).
-		Where("id = ? AND node_id = ?", taskID, nodeID).
+		Where("id = ?", taskID).
 		Delete(&entity.Task{}).Error
 }
 
-func (r *taskRepository) CountTasksByStatus(ctx context.Context, nodeID uuid.UUID) ([]tasks.StatusCount, error) {
+func (r *taskRepository) CountTasksByStatusAndProject(ctx context.Context, projectID uuid.UUID) ([]tasks.StatusCount, error) {
 	var results []tasks.StatusCount
 	err := r.db.WithContext(ctx).
 		Model(&entity.Task{}).
 		Select("status, COUNT(*) as count").
-		Where("node_id = ?", nodeID).
+		Where("project_id = ?", projectID).
 		Group("status").
 		Scan(&results).Error
 
@@ -83,11 +81,11 @@ func (r *taskRepository) CountTasksByStatus(ctx context.Context, nodeID uuid.UUI
 	return results, nil
 }
 
-func (r *taskRepository) ListUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error) {
+func (r *taskRepository) ListUnscheduledTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
 	var tasks []*entity.Task
 	err := r.db.WithContext(ctx).
 		Preload("Project").
-		Where("node_id = ?", nodeID).
+		Where("project_id = ?", projectID).
 		Where("status IN (?)", []string{"todo", "in_progress"}).
 		Where("(start_datetime IS NULL OR end_datetime IS NULL)").
 		Order("updated_at DESC").
@@ -100,7 +98,7 @@ func (r *taskRepository) ListUnscheduledTasks(ctx context.Context, nodeID uuid.U
 	return tasks, nil
 }
 
-func (r *taskRepository) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error) {
+func (r *taskRepository) ListTodayTasksByProject(ctx context.Context, projectID uuid.UUID, today time.Time) ([]*entity.Task, error) {
 	// Get start of day (00:00:00)
 	startOfDay := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
 	// Get end of day (23:59:59)
@@ -109,7 +107,7 @@ func (r *taskRepository) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, t
 	var tasks []*entity.Task
 	err := r.db.WithContext(ctx).
 		Preload("Project").
-		Where("node_id = ?", nodeID).
+		Where("project_id = ?", projectID).
 		Where(
 			r.db.Where("start_datetime >= ? AND start_datetime <= ?", startOfDay, endOfDay).
 				Or("end_datetime >= ? AND end_datetime <= ?", startOfDay, endOfDay).

@@ -10,7 +10,6 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
-	"github.com/google/uuid"
 )
 
 // SendMessageUseCase handles sending messages to the AI assistant
@@ -34,7 +33,13 @@ func (uc *SendMessageUseCase) Execute(ctx context.Context, accountID string, nod
 		return nil, err
 	}
 
-	resp, err := uc.chatService.SendMessage(ctx, serviceReq, nodeID)
+	// Parse accountID to UUID
+	parsedAccountID, err := utils.ParseID(accountID, "acc")
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
+	}
+
+	resp, err := uc.chatService.SendMessage(ctx, serviceReq, nodeID, parsedAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +62,7 @@ func (uc *SendMessageUseCase) buildServiceRequest(accountID string, req *chat.Se
 		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
-	parsedAccountID, err := uuid.Parse(accountID)
+	parsedAccountID, err := utils.ParseID(accountID, "acc")
 	if err != nil {
 		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}

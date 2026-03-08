@@ -46,10 +46,7 @@ func (uc *AddMemberUseCase) Execute(ctx context.Context, req *project.AddMemberR
 		return nil, apperror.NewInternalServerError("failed to look up account", "LOOKUP_ACCOUNT_ERROR", err)
 	}
 
-	role := req.Role
-	if role == "" {
-		role = "member"
-	}
+	role := string(entity.RoleMember) // Member
 
 	member, err := uc.projectService.AddMember(ctx, projectID, acc.ID, role, nodeID)
 	if err != nil {
@@ -59,6 +56,6 @@ func (uc *AddMemberUseCase) Execute(ctx context.Context, req *project.AddMemberR
 	return &project.AddMemberResponse{
 		ProjectID: utils.ShortUUIDWithPrefix(member.ProjectID, entity.ProjectIDPrefix),
 		AccountID: utils.ShortUUIDWithPrefix(member.AccountID, accountEntity.AccountIDPrefix),
-		Role:      member.Role,
+		Role:      member.Role.String(),
 	}, nil
 }

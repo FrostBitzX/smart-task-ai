@@ -70,21 +70,6 @@ func (mr *MockAccountRepositoryMockRecorder) ExistsAccount(ctx, username, email 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsAccount", reflect.TypeOf((*MockAccountRepository)(nil).ExistsAccount), ctx, username, email)
 }
 
-// GetByEmail mocks base method.
-func (m *MockAccountRepository) GetByEmail(ctx context.Context, email string) (*entity.Account, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByEmail", ctx, email)
-	ret0, _ := ret[0].(*entity.Account)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByEmail indicates an expected call of GetByEmail.
-func (mr *MockAccountRepositoryMockRecorder) GetByEmail(ctx, email any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByEmail", reflect.TypeOf((*MockAccountRepository)(nil).GetByEmail), ctx, email)
-}
-
 // GetAccount mocks base method.
 func (m *MockAccountRepository) GetAccount(ctx context.Context, id string) (*entity.Account, error) {
 	m.ctrl.T.Helper()
@@ -98,6 +83,21 @@ func (m *MockAccountRepository) GetAccount(ctx context.Context, id string) (*ent
 func (mr *MockAccountRepositoryMockRecorder) GetAccount(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockAccountRepository)(nil).GetAccount), ctx, id)
+}
+
+// GetByEmail mocks base method.
+func (m *MockAccountRepository) GetByEmail(ctx context.Context, email string) (*entity.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByEmail", ctx, email)
+	ret0, _ := ret[0].(*entity.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByEmail indicates an expected call of GetByEmail.
+func (mr *MockAccountRepositoryMockRecorder) GetByEmail(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByEmail", reflect.TypeOf((*MockAccountRepository)(nil).GetByEmail), ctx, email)
 }
 
 // GetByUsername mocks base method.

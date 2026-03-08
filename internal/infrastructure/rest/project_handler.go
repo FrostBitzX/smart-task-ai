@@ -129,7 +129,7 @@ func (h *ProjectHandler) GetProject(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
 	}
 
-	// Get NodeID from JWT claims
+	// Get NodeID and AccountID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
@@ -142,7 +142,13 @@ func (h *ProjectHandler) GetProject(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	data, err := h.GetProjectByIDUC.Execute(c.Context(), projectID, nodeID)
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.GetProjectByIDUC.Execute(c.Context(), projectID, nodeID, accountID)
 	if err != nil {
 		return responses.Error(c, err)
 	}
@@ -294,7 +300,7 @@ func (h *ProjectHandler) ListMembers(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.NewBadRequestError("missing projectId", "MISSING_PROJECT_ID", nil))
 	}
 
-	// Get NodeID from JWT claims
+	// Get NodeID and AccountID from JWT claims
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", nil)
@@ -307,7 +313,13 @@ func (h *ProjectHandler) ListMembers(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	data, err := h.ListMembersUC.Execute(c.Context(), projectID, nodeID)
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", nil)
+		return responses.Error(c, apperror.ErrUnauthorized)
+	}
+
+	data, err := h.ListMembersUC.Execute(c.Context(), projectID, nodeID, accountID)
 	if err != nil {
 		return responses.Error(c, err)
 	}

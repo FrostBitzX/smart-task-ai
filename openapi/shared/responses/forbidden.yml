@@ -1,4 +1,4 @@
-description: Forbidden - Cross-tenant access attempt or insufficient permissions
+description: Forbidden - Not a project member or insufficient permissions
 content:
   application/json:
     schema:
@@ -22,22 +22,23 @@ content:
             message:
               type: string
               enum:
-                - FORBIDDEN_CROSS_TENANT_ACCESS
+                - NOT_PROJECT_MEMBER
+                - NO_ACCESS
                 - PROJECT_NOT_FOUND_OR_FORBIDDEN
                 - TASK_NOT_FOUND_OR_FORBIDDEN
-              example: "FORBIDDEN_CROSS_TENANT_ACCESS"
+              example: "NOT_PROJECT_MEMBER"
           required: [code, message]
       required: [success, message, data, error]
     examples:
-      crossTenantAccess:
-        summary: Cross-tenant access attempt
+      notProjectMember:
+        summary: User is not a member of the project
         value:
           success: false
           message: "Access forbidden"
           data: null
           error:
             code: 403
-            message: "FORBIDDEN_CROSS_TENANT_ACCESS"
+            message: "NOT_PROJECT_MEMBER"
       projectNotFoundOrForbidden:
         summary: Project not found or forbidden
         value:

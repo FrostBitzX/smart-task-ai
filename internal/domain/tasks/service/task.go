@@ -18,33 +18,44 @@ import (
 type TaskService struct {
 	repo        tasks.TaskRepository
 	projectRepo projects.ProjectRepository
+	memberRepo  projects.ProjectMemberRepository
 }
 
-func NewTaskService(repo tasks.TaskRepository, projectRepo projects.ProjectRepository) *TaskService {
+func NewTaskService(repo tasks.TaskRepository, projectRepo projects.ProjectRepository, memberRepo projects.ProjectMemberRepository) *TaskService {
 	return &TaskService{
 		repo:        repo,
 		projectRepo: projectRepo,
+		memberRepo:  memberRepo,
 	}
 }
 
-func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *task.CreateTaskRequest, nodeIDStr string) (*entity.Task, error) {
+func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *task.CreateTaskRequest, accountIDStr string) (*entity.Task, error) {
 	if req == nil {
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	// Parse nodeID
-	nodeID, err := uuid.Parse(nodeIDStr)
+	// Parse accountID
+	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
-		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
-	// Validate that project exists and belongs to the same node_id
-	_, err = s.projectRepo.GetProjectByID(ctx, projectID, nodeID)
+	// Check if user is a member of the project
+	isMember, err := s.memberRepo.IsMember(ctx, projectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to verify membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
+	}
+
+	// Get project to use its node_id for the task
+	project, err := s.projectRepo.GetProjectByID(ctx, projectID, uuid.Nil)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
 		}
-		return nil, apperror.NewInternalServerError("failed to validate project", "VALIDATE_PROJECT_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
 	}
 
 	if err := s.validateTimeRange(req.StartDateTime, req.EndDateTime); err != nil {
@@ -55,7 +66,7 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	now := time.Now()
 	task := &entity.Task{
 		ID:            uuid.New(),
-		NodeID:        nodeID,
+		NodeID:        project.NodeID,
 		ProjectID:     projectID,
 		Name:          req.Name,
 		Priority:      req.Priority,
@@ -82,7 +93,7 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 		task.RecurringUntil = req.RecurringUntil
 	}
 
-	// persist account to database
+	// persist task to database
 	err = s.repo.CreateTask(ctx, task)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to create task", "CREATE_TASK_ERROR", err)
@@ -91,14 +102,15 @@ func (s *TaskService) CreateTask(ctx context.Context, projectID uuid.UUID, req *
 	return task, nil
 }
 
-func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID, nodeIDStr string) (*entity.Task, error) {
-	// Parse nodeID
-	nodeID, err := uuid.Parse(nodeIDStr)
+func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID, accountIDStr string) (*entity.Task, error) {
+	// Parse accountID
+	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
-		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
-	tsk, err := s.repo.GetTaskByID(ctx, taskID, nodeID)
+	// Get task
+	tsk, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
@@ -106,17 +118,35 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID uuid.UUID, nodeIDS
 		return nil, apperror.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
 	}
 
+	// Check if user is a member of the project
+	isMember, err := s.memberRepo.IsMember(ctx, tsk.ProjectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to verify membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
+	}
+
 	return tsk, nil
 }
 
-func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUID, nodeIDStr string) ([]*entity.Task, error) {
-	// Parse nodeID
-	nodeID, err := uuid.Parse(nodeIDStr)
+func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUID, accountIDStr string) ([]*entity.Task, error) {
+	// Parse accountID
+	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
-		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
-	tasks, err := s.repo.ListTasksByProject(ctx, projectID, nodeID)
+	// Check if user is a member of the project
+	isMember, err := s.memberRepo.IsMember(ctx, projectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to verify membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
+	}
+
+	tasks, err := s.repo.ListTasksByProject(ctx, projectID)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to list tasks", "LIST_TASKS_ERROR", err)
 	}
@@ -124,20 +154,29 @@ func (s *TaskService) ListTasksByProject(ctx context.Context, projectID uuid.UUI
 	return tasks, nil
 }
 
-func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *task.UpdateTaskRequest, nodeIDStr string) (*entity.Task, error) {
-	// Parse nodeID
-	nodeID, err := uuid.Parse(nodeIDStr)
+func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *task.UpdateTaskRequest, accountIDStr string) (*entity.Task, error) {
+	// Parse accountID
+	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
-		return nil, apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
 	// Get task by ID for update
-	tsk, err := s.repo.GetTaskByID(ctx, taskID, nodeID)
+	tsk, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return nil, apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
 		}
 		return nil, apperror.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
+	}
+
+	// Check if user is a member of the project
+	isMember, err := s.memberRepo.IsMember(ctx, tsk.ProjectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to verify membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
 	}
 
 	// Rule: If status != todo, cannot change start_datetime
@@ -171,7 +210,7 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 
 	tsk.UpdatedAt = time.Now()
 
-	err = s.repo.UpdateTask(ctx, tsk, nodeID)
+	err = s.repo.UpdateTask(ctx, tsk)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to update task", "UPDATE_TASK_ERROR", err)
 	}
@@ -179,14 +218,15 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 	return tsk, nil
 }
 
-func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeIDStr string) error {
-	// Parse nodeID
-	nodeID, err := uuid.Parse(nodeIDStr)
+func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, accountIDStr string) error {
+	// Parse accountID
+	accountID, err := uuid.Parse(accountIDStr)
 	if err != nil {
-		return apperror.NewBadRequestError("invalid node ID format", "INVALID_NODE_ID", err)
+		return apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
 
-	_, err = s.repo.GetTaskByID(ctx, taskID, nodeID)
+	// Get task
+	tsk, err := s.repo.GetTaskByID(ctx, taskID)
 	if err != nil {
 		if errors.Is(err, apperror.ErrRecordNotFound) {
 			return apperror.NewNotFoundError("task not found", "TASK_NOT_FOUND", err)
@@ -194,7 +234,16 @@ func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeIDSt
 		return apperror.NewInternalServerError("failed to get task", "GET_TASK_ERROR", err)
 	}
 
-	err = s.repo.DeleteTask(ctx, taskID, nodeID)
+	// Check if user is a member of the project
+	isMember, err := s.memberRepo.IsMember(ctx, tsk.ProjectID, accountID)
+	if err != nil {
+		return apperror.NewInternalServerError("failed to verify membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
+	}
+
+	err = s.repo.DeleteTask(ctx, taskID)
 	if err != nil {
 		return apperror.NewInternalServerError("failed to delete task", "DELETE_TASK_ERROR", err)
 	}
@@ -202,13 +251,14 @@ func (s *TaskService) DeleteTask(ctx context.Context, taskID uuid.UUID, nodeIDSt
 	return nil
 }
 
-func (s *TaskService) GetTaskStatistics(ctx context.Context, nodeID uuid.UUID) (*tasks.TaskStatistics, error) {
-	status, err := s.repo.CountTasksByStatus(ctx, nodeID)
+func (s *TaskService) GetTaskStatistics(ctx context.Context, accountID uuid.UUID) (*tasks.TaskStatistics, error) {
+	// Get all projects where user is a member
+	projects, _, err := s.projectRepo.ListProjectByAccountID(ctx, accountID, uuid.Nil, 1000, 0)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get task statistics", "GET_STATISTICS_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to list user projects", "LIST_PROJECTS_ERROR", err)
 	}
 
-	// Convert slice of StatusCount to TaskStatistics struct
+	// Initialize statistics
 	statistics := &tasks.TaskStatistics{
 		Todo:       0,
 		InProgress: 0,
@@ -216,38 +266,68 @@ func (s *TaskService) GetTaskStatistics(ctx context.Context, nodeID uuid.UUID) (
 		Done:       0,
 	}
 
-	for _, sc := range status {
-		switch sc.Status {
-		case "todo":
-			statistics.Todo = sc.Count
-		case "in_progress":
-			statistics.InProgress = sc.Count
-		case "in_review":
-			statistics.InReview = sc.Count
-		case "done":
-			statistics.Done = sc.Count
+	// Count tasks for each project
+	for _, project := range projects {
+		status, err := s.repo.CountTasksByStatusAndProject(ctx, project.ID)
+		if err != nil {
+			return nil, apperror.NewInternalServerError("failed to get task statistics", "GET_STATISTICS_ERROR", err)
+		}
+
+		for _, sc := range status {
+			switch sc.Status {
+			case "todo":
+				statistics.Todo += sc.Count
+			case "in_progress":
+				statistics.InProgress += sc.Count
+			case "in_review":
+				statistics.InReview += sc.Count
+			case "done":
+				statistics.Done += sc.Count
+			}
 		}
 	}
 
 	return statistics, nil
 }
 
-func (s *TaskService) GetUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error) {
-	tasks, err := s.repo.ListUnscheduledTasks(ctx, nodeID)
+func (s *TaskService) GetUnscheduledTasks(ctx context.Context, accountID uuid.UUID) ([]*entity.Task, error) {
+	// Get all projects where user is a member
+	projects, _, err := s.projectRepo.ListProjectByAccountID(ctx, accountID, uuid.Nil, 1000, 0)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to get unscheduled tasks", "GET_UNSCHEDULED_TASKS_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to list user projects", "LIST_PROJECTS_ERROR", err)
 	}
 
-	return tasks, nil
+	// Collect all unscheduled tasks from user's projects
+	var allTasks []*entity.Task
+	for _, project := range projects {
+		tasks, err := s.repo.ListUnscheduledTasksByProject(ctx, project.ID)
+		if err != nil {
+			return nil, apperror.NewInternalServerError("failed to get unscheduled tasks", "GET_UNSCHEDULED_TASKS_ERROR", err)
+		}
+		allTasks = append(allTasks, tasks...)
+	}
+
+	return allTasks, nil
 }
 
-func (s *TaskService) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error) {
-	tasks, err := s.repo.ListTodayTasks(ctx, nodeID, today)
+func (s *TaskService) ListTodayTasks(ctx context.Context, accountID uuid.UUID, today time.Time) ([]*entity.Task, error) {
+	// Get all projects where user is a member
+	projects, _, err := s.projectRepo.ListProjectByAccountID(ctx, accountID, uuid.Nil, 1000, 0)
 	if err != nil {
-		return nil, apperror.NewInternalServerError("failed to list today's tasks", "LIST_TODAY_TASKS_ERROR", err)
+		return nil, apperror.NewInternalServerError("failed to list user projects", "LIST_PROJECTS_ERROR", err)
 	}
 
-	return tasks, nil
+	// Collect all today's tasks from user's projects
+	var allTasks []*entity.Task
+	for _, project := range projects {
+		tasks, err := s.repo.ListTodayTasksByProject(ctx, project.ID, today)
+		if err != nil {
+			return nil, apperror.NewInternalServerError("failed to list today's tasks", "LIST_TODAY_TASKS_ERROR", err)
+		}
+		allTasks = append(allTasks, tasks...)
+	}
+
+	return allTasks, nil
 }
 
 func (s *TaskService) validateTimeRange(startStr, endStr *string) error {

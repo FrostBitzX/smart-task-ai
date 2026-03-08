@@ -45,33 +45,33 @@ func (m *MockTaskRepository) EXPECT() *MockTaskRepositoryMockRecorder {
 }
 
 // CountTasksByProject mocks base method.
-func (m *MockTaskRepository) CountTasksByProject(ctx context.Context, projectID, nodeID uuid.UUID) (int64, error) {
+func (m *MockTaskRepository) CountTasksByProject(ctx context.Context, projectID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountTasksByProject", ctx, projectID, nodeID)
+	ret := m.ctrl.Call(m, "CountTasksByProject", ctx, projectID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CountTasksByProject indicates an expected call of CountTasksByProject.
-func (mr *MockTaskRepositoryMockRecorder) CountTasksByProject(ctx, projectID, nodeID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) CountTasksByProject(ctx, projectID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).CountTasksByProject), ctx, projectID, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).CountTasksByProject), ctx, projectID)
 }
 
-// CountTasksByStatus mocks base method.
-func (m *MockTaskRepository) CountTasksByStatus(ctx context.Context, nodeID uuid.UUID) ([]tasks.StatusCount, error) {
+// CountTasksByStatusAndProject mocks base method.
+func (m *MockTaskRepository) CountTasksByStatusAndProject(ctx context.Context, projectID uuid.UUID) ([]tasks.StatusCount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountTasksByStatus", ctx, nodeID)
+	ret := m.ctrl.Call(m, "CountTasksByStatusAndProject", ctx, projectID)
 	ret0, _ := ret[0].([]tasks.StatusCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CountTasksByStatus indicates an expected call of CountTasksByStatus.
-func (mr *MockTaskRepositoryMockRecorder) CountTasksByStatus(ctx, nodeID any) *gomock.Call {
+// CountTasksByStatusAndProject indicates an expected call of CountTasksByStatusAndProject.
+func (mr *MockTaskRepositoryMockRecorder) CountTasksByStatusAndProject(ctx, projectID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTasksByStatus", reflect.TypeOf((*MockTaskRepository)(nil).CountTasksByStatus), ctx, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTasksByStatusAndProject", reflect.TypeOf((*MockTaskRepository)(nil).CountTasksByStatusAndProject), ctx, projectID)
 }
 
 // CreateTask mocks base method.
@@ -89,89 +89,89 @@ func (mr *MockTaskRepositoryMockRecorder) CreateTask(ctx, task any) *gomock.Call
 }
 
 // DeleteTask mocks base method.
-func (m *MockTaskRepository) DeleteTask(ctx context.Context, taskID, nodeID uuid.UUID) error {
+func (m *MockTaskRepository) DeleteTask(ctx context.Context, taskID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTask", ctx, taskID, nodeID)
+	ret := m.ctrl.Call(m, "DeleteTask", ctx, taskID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteTask indicates an expected call of DeleteTask.
-func (mr *MockTaskRepositoryMockRecorder) DeleteTask(ctx, taskID, nodeID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) DeleteTask(ctx, taskID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTask", reflect.TypeOf((*MockTaskRepository)(nil).DeleteTask), ctx, taskID, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTask", reflect.TypeOf((*MockTaskRepository)(nil).DeleteTask), ctx, taskID)
 }
 
 // GetTaskByID mocks base method.
-func (m *MockTaskRepository) GetTaskByID(ctx context.Context, taskID, nodeID uuid.UUID) (*entity.Task, error) {
+func (m *MockTaskRepository) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*entity.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTaskByID", ctx, taskID, nodeID)
+	ret := m.ctrl.Call(m, "GetTaskByID", ctx, taskID)
 	ret0, _ := ret[0].(*entity.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTaskByID indicates an expected call of GetTaskByID.
-func (mr *MockTaskRepositoryMockRecorder) GetTaskByID(ctx, taskID, nodeID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) GetTaskByID(ctx, taskID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskByID", reflect.TypeOf((*MockTaskRepository)(nil).GetTaskByID), ctx, taskID, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTaskByID", reflect.TypeOf((*MockTaskRepository)(nil).GetTaskByID), ctx, taskID)
 }
 
 // ListTasksByProject mocks base method.
-func (m *MockTaskRepository) ListTasksByProject(ctx context.Context, projectID, nodeID uuid.UUID) ([]*entity.Task, error) {
+func (m *MockTaskRepository) ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTasksByProject", ctx, projectID, nodeID)
+	ret := m.ctrl.Call(m, "ListTasksByProject", ctx, projectID)
 	ret0, _ := ret[0].([]*entity.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListTasksByProject indicates an expected call of ListTasksByProject.
-func (mr *MockTaskRepositoryMockRecorder) ListTasksByProject(ctx, projectID, nodeID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) ListTasksByProject(ctx, projectID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).ListTasksByProject), ctx, projectID, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).ListTasksByProject), ctx, projectID)
 }
 
-// ListTodayTasks mocks base method.
-func (m *MockTaskRepository) ListTodayTasks(ctx context.Context, nodeID uuid.UUID, today time.Time) ([]*entity.Task, error) {
+// ListTodayTasksByProject mocks base method.
+func (m *MockTaskRepository) ListTodayTasksByProject(ctx context.Context, projectID uuid.UUID, today time.Time) ([]*entity.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTodayTasks", ctx, nodeID, today)
+	ret := m.ctrl.Call(m, "ListTodayTasksByProject", ctx, projectID, today)
 	ret0, _ := ret[0].([]*entity.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListTodayTasks indicates an expected call of ListTodayTasks.
-func (mr *MockTaskRepositoryMockRecorder) ListTodayTasks(ctx, nodeID, today any) *gomock.Call {
+// ListTodayTasksByProject indicates an expected call of ListTodayTasksByProject.
+func (mr *MockTaskRepositoryMockRecorder) ListTodayTasksByProject(ctx, projectID, today any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTodayTasks", reflect.TypeOf((*MockTaskRepository)(nil).ListTodayTasks), ctx, nodeID, today)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTodayTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).ListTodayTasksByProject), ctx, projectID, today)
 }
 
-// ListUnscheduledTasks mocks base method.
-func (m *MockTaskRepository) ListUnscheduledTasks(ctx context.Context, nodeID uuid.UUID) ([]*entity.Task, error) {
+// ListUnscheduledTasksByProject mocks base method.
+func (m *MockTaskRepository) ListUnscheduledTasksByProject(ctx context.Context, projectID uuid.UUID) ([]*entity.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUnscheduledTasks", ctx, nodeID)
+	ret := m.ctrl.Call(m, "ListUnscheduledTasksByProject", ctx, projectID)
 	ret0, _ := ret[0].([]*entity.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListUnscheduledTasks indicates an expected call of ListUnscheduledTasks.
-func (mr *MockTaskRepositoryMockRecorder) ListUnscheduledTasks(ctx, nodeID any) *gomock.Call {
+// ListUnscheduledTasksByProject indicates an expected call of ListUnscheduledTasksByProject.
+func (mr *MockTaskRepositoryMockRecorder) ListUnscheduledTasksByProject(ctx, projectID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnscheduledTasks", reflect.TypeOf((*MockTaskRepository)(nil).ListUnscheduledTasks), ctx, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnscheduledTasksByProject", reflect.TypeOf((*MockTaskRepository)(nil).ListUnscheduledTasksByProject), ctx, projectID)
 }
 
 // UpdateTask mocks base method.
-func (m *MockTaskRepository) UpdateTask(ctx context.Context, task *entity.Task, nodeID uuid.UUID) error {
+func (m *MockTaskRepository) UpdateTask(ctx context.Context, task *entity.Task) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTask", ctx, task, nodeID)
+	ret := m.ctrl.Call(m, "UpdateTask", ctx, task)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateTask indicates an expected call of UpdateTask.
-func (mr *MockTaskRepositoryMockRecorder) UpdateTask(ctx, task, nodeID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) UpdateTask(ctx, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockTaskRepository)(nil).UpdateTask), ctx, task, nodeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTask", reflect.TypeOf((*MockTaskRepository)(nil).UpdateTask), ctx, task)
 }

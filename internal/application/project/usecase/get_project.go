@@ -23,13 +23,18 @@ func NewGetProjectByIDUseCase(svc *service.ProjectService, l logger.Logger) *Get
 	}
 }
 
-func (uc *GetProjectByIDUseCase) Execute(ctx context.Context, id string, nodeID string) (*project.ProjectResponse, error) {
+func (uc *GetProjectByIDUseCase) Execute(ctx context.Context, id string, nodeID string, accountIDStr string) (*project.ProjectResponse, error) {
 	projectID, err := utils.ParseID(id, entity.ProjectIDPrefix)
 	if err != nil {
 		return nil, apperror.NewBadRequestError("invalid project ID format", "INVALID_PROJECT_ID", err)
 	}
 
-	proj, err := uc.projectService.GetProjectByID(ctx, projectID, nodeID)
+	accountID, err := utils.ParseID(accountIDStr, "acc")
+	if err != nil {
+		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
+	}
+
+	proj, err := uc.projectService.GetProjectByID(ctx, projectID, nodeID, accountID)
 	if err != nil {
 		return nil, err
 	}

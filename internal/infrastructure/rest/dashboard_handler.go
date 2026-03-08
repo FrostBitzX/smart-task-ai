@@ -32,7 +32,7 @@ func NewDashboardHandler(
 }
 
 func (h *DashboardHandler) GetTaskStatistics(c *fiber.Ctx) error {
-	// Get NodeID from JWT claims
+	// Get AccountID from JWT claims (for soft multi-tenant)
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", map[string]interface{}{
@@ -41,20 +41,20 @@ func (h *DashboardHandler) GetTaskStatistics(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	nodeID, ok := jwtClaims["NodeId"].(string)
-	if !ok || nodeID == "" {
-		h.logger.Error("Missing NodeId in JWT claims", map[string]interface{}{
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", map[string]interface{}{
 			"path":   c.Path(),
 			"claims": jwtClaims,
 		})
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	data, err := h.GetTaskStatisticsUC.Execute(c.Context(), nodeID)
+	data, err := h.GetTaskStatisticsUC.Execute(c.Context(), accountID)
 	if err != nil {
 		h.logger.Error("Failed to get task statistics", map[string]interface{}{
-			"nodeID": nodeID,
-			"error":  err.Error(),
+			"accountID": accountID,
+			"error":     err.Error(),
 		})
 		return responses.Error(c, err)
 	}
@@ -63,7 +63,7 @@ func (h *DashboardHandler) GetTaskStatistics(c *fiber.Ctx) error {
 }
 
 func (h *DashboardHandler) GetUnscheduledTasks(c *fiber.Ctx) error {
-	// Get NodeID from JWT claims
+	// Get AccountID from JWT claims (for soft multi-tenant)
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", map[string]interface{}{
@@ -72,20 +72,20 @@ func (h *DashboardHandler) GetUnscheduledTasks(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	nodeID, ok := jwtClaims["NodeId"].(string)
-	if !ok || nodeID == "" {
-		h.logger.Error("Missing NodeId in JWT claims", map[string]interface{}{
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", map[string]interface{}{
 			"path":   c.Path(),
 			"claims": jwtClaims,
 		})
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	data, err := h.GetUnscheduledTasksUC.Execute(c.Context(), nodeID)
+	data, err := h.GetUnscheduledTasksUC.Execute(c.Context(), accountID)
 	if err != nil {
 		h.logger.Error("Failed to get unscheduled tasks", map[string]interface{}{
-			"nodeID": nodeID,
-			"error":  err.Error(),
+			"accountID": accountID,
+			"error":     err.Error(),
 		})
 		return responses.Error(c, err)
 	}
@@ -94,7 +94,7 @@ func (h *DashboardHandler) GetUnscheduledTasks(c *fiber.Ctx) error {
 }
 
 func (h *DashboardHandler) ListTodayTasks(c *fiber.Ctx) error {
-	// Get NodeID from JWT claims
+	// Get AccountID from JWT claims (for soft multi-tenant)
 	jwtClaims, ok := c.Locals("jwt_claims").(map[string]interface{})
 	if !ok {
 		h.logger.Error("Invalid JWT claims", map[string]interface{}{
@@ -103,9 +103,9 @@ func (h *DashboardHandler) ListTodayTasks(c *fiber.Ctx) error {
 		return responses.Error(c, apperror.ErrUnauthorized)
 	}
 
-	nodeID, ok := jwtClaims["NodeId"].(string)
-	if !ok || nodeID == "" {
-		h.logger.Error("Missing NodeId in JWT claims", map[string]interface{}{
+	accountID, ok := jwtClaims["AccountId"].(string)
+	if !ok || accountID == "" {
+		h.logger.Error("Missing AccountId in JWT claims", map[string]interface{}{
 			"path":   c.Path(),
 			"claims": jwtClaims,
 		})
@@ -127,12 +127,12 @@ func (h *DashboardHandler) ListTodayTasks(c *fiber.Ctx) error {
 		date = &parsedDate
 	}
 
-	data, err := h.ListTodayTasksUC.Execute(c.Context(), nodeID, date)
+	data, err := h.ListTodayTasksUC.Execute(c.Context(), accountID, date)
 	if err != nil {
 		h.logger.Error("Failed to list today's tasks", map[string]interface{}{
-			"nodeID": nodeID,
-			"date":   dateStr,
-			"error":  err.Error(),
+			"accountID": accountID,
+			"date":      dateStr,
+			"error":     err.Error(),
 		})
 		return responses.Error(c, err)
 	}

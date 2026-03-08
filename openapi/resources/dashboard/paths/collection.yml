@@ -4,7 +4,7 @@ paths:
       tags:
         - dashboard
       summary: Get task statistics
-      description: Returns task counts grouped by status (todo, in_progress, in_review, done) for all projects
+      description: Returns task counts grouped by status (todo, in_progress, in_review, done) aggregated across all projects the user is a member of
       operationId: getTaskStatistics
       security:
         - bearerAuth: []
@@ -30,7 +30,7 @@ paths:
       tags:
         - dashboard
       summary: Get unscheduled tasks
-      description: Returns tasks with status todo or in_progress that have no start_date and no end_date.
+      description: Returns tasks with status todo or in_progress that have no start_date and no end_date, from all projects the user is a member of
       operationId: getUnscheduledTasks
       security:
         - bearerAuth: []
@@ -56,7 +56,7 @@ paths:
       tags:
         - dashboard
       summary: Get today's tasks
-      description: Returns tasks with status todo or in_progress where start_date equals today's date.
+      description: Returns tasks with status todo or in_progress where start_date equals today's date, from all projects the user is a member of
       operationId: getTodayTasks
       security:
         - bearerAuth: []
