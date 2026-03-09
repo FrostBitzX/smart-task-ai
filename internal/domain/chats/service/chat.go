@@ -83,7 +83,7 @@ func (s *chatService) SendMessage(ctx context.Context, req *SendMessageRequest, 
 		return nil, s.handleProjectError(err)
 	}
 
-	tasks, err := s.taskService.ListTasksByProject(ctx, req.ProjectID, nodeID)
+	tasks, err := s.taskService.ListTasksByProject(ctx, req.ProjectID, accountID.String())
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to get tasks", "GET_TASKS_ERROR", err)
 	}
