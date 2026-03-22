@@ -362,6 +362,9 @@ func TestTaskService_UpdateTask(t *testing.T) {
 
 	now := time.Now()
 	newStartTime := now.Add(time.Hour).Format(time.RFC3339)
+	todoStatus := "todo"
+	projectID := uuid.New()
+	accountID, _ := uuid.Parse(nodeIDStr)
 
 	tests := []struct {
 		name          string
@@ -379,13 +382,18 @@ func TestTaskService_UpdateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				existingTask := &entity.Task{
-					ID:     taskID,
-					Status: "todo",
-					Name:   "Old Name",
+					ID:        taskID,
+					Status:    "todo",
+					Name:      "Old Name",
+					ProjectID: projectID,
 				}
 				mockRepo.EXPECT().
 					GetTaskByID(ctx, taskID).
 					Return(existingTask, nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					IsMember(ctx, projectID, accountID).
+					Return(true, nil).
 					Times(1)
 				mockRepo.EXPECT().
 					UpdateTask(ctx, gomock.Any()).
@@ -406,15 +414,20 @@ func TestTaskService_UpdateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				existingTask := &entity.Task{
-					ID:     taskID,
-					Status: "doing", // Not "todo"
+					ID:        taskID,
+					Status:    "doing", // Not "todo"
+					ProjectID: projectID,
 				}
 				mockRepo.EXPECT().
 					GetTaskByID(ctx, taskID).
 					Return(existingTask, nil).
 					Times(1)
+				mockMemberRepo.EXPECT().
+					IsMember(ctx, projectID, accountID).
+					Return(true, nil).
+					Times(1)
 			},
-			expectedError: "cannot update start_datetime when status is not todo",
+			expectedError: "cannot update start date/time when status is not todo",
 			expectNil:     true,
 		},
 		{
@@ -425,16 +438,54 @@ func TestTaskService_UpdateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				existingTask := &entity.Task{
-					ID:     taskID,
-					Status: "todo",
+					ID:        taskID,
+					Status:    "todo",
+					ProjectID: projectID,
 				}
 				mockRepo.EXPECT().
 					GetTaskByID(ctx, taskID).
 					Return(existingTask, nil).
 					Times(1)
+				mockMemberRepo.EXPECT().
+					IsMember(ctx, projectID, accountID).
+					Return(true, nil).
+					Times(1)
 				mockRepo.EXPECT().
 					UpdateTask(ctx, gomock.Any()).
 					Return(nil).
+					Times(1)
+			},
+			expectedError: "",
+			expectNil:     false,
+		},
+		{
+			name:   "success - can update start_datetime when changing status to todo",
+			taskID: taskID,
+			request: &task.UpdateTaskRequest{
+				Status:        &todoStatus,
+				StartDateTime: &newStartTime,
+			},
+			setupMock: func() {
+				existingTask := &entity.Task{
+					ID:        taskID,
+					Status:    "in_progress", // Current status is not todo
+					ProjectID: projectID,
+				}
+				mockRepo.EXPECT().
+					GetTaskByID(ctx, taskID).
+					Return(existingTask, nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					IsMember(ctx, projectID, accountID).
+					Return(true, nil).
+					Times(1)
+				mockRepo.EXPECT().
+					UpdateTask(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, tsk *entity.Task) error {
+						assert.Equal(t, "todo", tsk.Status)
+						assert.NotNil(t, tsk.StartDateTime)
+						return nil
+					}).
 					Times(1)
 			},
 			expectedError: "",
@@ -463,12 +514,17 @@ func TestTaskService_UpdateTask(t *testing.T) {
 			},
 			setupMock: func() {
 				existingTask := &entity.Task{
-					ID:     taskID,
-					Status: "todo",
+					ID:        taskID,
+					Status:    "todo",
+					ProjectID: projectID,
 				}
 				mockRepo.EXPECT().
 					GetTaskByID(ctx, taskID).
 					Return(existingTask, nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					IsMember(ctx, projectID, accountID).
+					Return(true, nil).
 					Times(1)
 				mockRepo.EXPECT().
 					UpdateTask(ctx, gomock.Any()).

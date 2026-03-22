@@ -179,9 +179,13 @@ func (s *TaskService) UpdateTask(ctx context.Context, taskID uuid.UUID, req *tas
 		return nil, apperror.NewForbiddenError("you are not a member of this project", "NOT_PROJECT_MEMBER", nil)
 	}
 
-	// Rule: If status != todo, cannot change start_datetime
-	if tsk.Status != "todo" && req.StartDateTime != nil {
-		return nil, apperror.NewBadRequestError("cannot update start_datetime when status is not todo", "INVALID_REQUEST", nil)
+	newStatus := tsk.Status
+	if req.Status != nil {
+		newStatus = *req.Status
+	}
+
+	if newStatus != "todo" && req.StartDateTime != nil {
+		return nil, apperror.NewBadRequestError("cannot update start date/time when status is not todo", "INVALID_REQUEST", nil)
 	}
 
 	// Additional validation same as CreateTask
