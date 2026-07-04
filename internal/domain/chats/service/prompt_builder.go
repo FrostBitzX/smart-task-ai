@@ -13,15 +13,17 @@ import (
 //go:embed instruction.txt
 var instructionPrompt string
 
-// PromptBuilder defines the interface for building system prompts
+const (
+	maxTasksInPrompt = 10
+	MaxHistoryMsg    = 8
+)
+
 type PromptBuilder interface {
 	BuildSystemPrompt(config *chats.AIConfig, tasks []*taskEntity.Task) string
 }
 
-// promptBuilder implements the PromptBuilder interface
 type promptBuilder struct{}
 
-// NewPromptBuilder creates a new prompt builder
 func NewPromptBuilder() PromptBuilder {
 	return &promptBuilder{}
 }
@@ -31,36 +33,35 @@ func NewPromptBuilder() PromptBuilder {
 func (p *promptBuilder) BuildSystemPrompt(config *chats.AIConfig, tasks []*taskEntity.Task) string {
 	var sb strings.Builder
 
-	// AI assistant introduction
-	sb.WriteString("คุณเป็นผู้ช่วย AI สำหรับจัดการ task\n")
+	sb.WriteString(fmt.Sprintf("Style: %s | ภาษา: %s | ความเชี่ยวชาญ: %s\n\n",
+		config.ChatStyle,
+		config.Language,
+		strings.Join(config.DomainKnowledge, ", "),
+	))
 
-	// Include AI config settings
-	sb.WriteString(fmt.Sprintf("Style: %s\n", config.ChatStyle))
-	sb.WriteString(fmt.Sprintf("ความเชี่ยวชาญ: %s\n", strings.Join(config.DomainKnowledge, ", ")))
-	sb.WriteString(fmt.Sprintf("ภาษา: %s\n\n", config.Language))
+	// จำกัดแค่ N tasks ล่าสุด ไม่ยัดทั้งหมด
+	limited := tasks
+	if len(tasks) > maxTasksInPrompt {
+		limited = tasks[len(tasks)-maxTasksInPrompt:]
+	}
 
-	// Include task list in prompt with task IDs
-	sb.WriteString("Tasks ปัจจุบันใน project:\n")
-	if len(tasks) == 0 {
-		sb.WriteString("- ไม่มี task\n")
+	if len(limited) == 0 {
+		sb.WriteString("Tasks: ไม่มี\n")
 	} else {
-		for _, task := range tasks {
+		sb.WriteString("Tasks ล่าสุด:\n")
+		for _, task := range limited {
 			taskID := utils.ShortUUIDWithPrefix(task.ID, taskEntity.TaskIDPrefix)
-			sb.WriteString(fmt.Sprintf("- [%s] %s (status: %s, priority: %s)", taskID, task.Name, task.Status, task.Priority))
-			if task.Description != nil && *task.Description != "" {
-				sb.WriteString(fmt.Sprintf(" - %s", *task.Description))
-			}
+			sb.WriteString(fmt.Sprintf("- [%s] %s (%s/%s)", taskID, task.Name, task.Status, task.Priority))
 			if task.StartDateTime != nil {
-				sb.WriteString(fmt.Sprintf(" เริ่ม: %s", *task.StartDateTime))
+				sb.WriteString(fmt.Sprintf(" %s", *task.StartDateTime))
 			}
 			if task.EndDateTime != nil {
-				sb.WriteString(fmt.Sprintf(" สิ้นสุด: %s", *task.EndDateTime))
+				sb.WriteString(fmt.Sprintf("→%s", *task.EndDateTime))
 			}
 			sb.WriteString("\n")
 		}
 	}
 
-	// Response format instructions from external file
 	sb.WriteString("\n")
 	sb.WriteString(instructionPrompt)
 

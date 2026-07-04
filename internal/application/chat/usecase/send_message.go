@@ -76,6 +76,12 @@ func convertSessionHistory(history []chat.MessageDTO) []groq.ChatMessage {
 		return nil
 	}
 
+	// ตัดเหลือแค่ N messages ล่าสุด
+	const maxHistory = 8
+	if len(history) > maxHistory {
+		history = history[len(history)-maxHistory:]
+	}
+
 	messages := make([]groq.ChatMessage, len(history))
 	for i, msg := range history {
 		messages[i] = groq.ChatMessage{
