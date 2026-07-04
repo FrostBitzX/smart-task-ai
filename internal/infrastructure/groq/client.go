@@ -16,7 +16,7 @@ import (
 const (
 	DefaultModel               = "openai/gpt-oss-120b"
 	DefaultTemperature         = 1.0
-	DefaultMaxCompletionTokens = 8192
+	DefaultMaxCompletionTokens = 4096
 	DefaultTopP                = 1.0
 	DefaultReasoningEffort     = "medium"
 	DefaultTimeout             = 30 * time.Second

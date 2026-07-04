@@ -169,6 +169,29 @@ func (s *chatService) parseStructuredResponse(response string) *SendMessageRespo
 	}
 }
 
+// ExtractHistoryText strips the tasks payload out of a prior structured AI
+// response, keeping only the display message. Session history only needs the
+// conversational text — the task list is redundant there since the system
+// prompt already re-injects the project's current tasks on every turn — and
+// echoing full task JSON back through history burns TPM budget for no benefit.
+func ExtractHistoryText(content string) string {
+	jsonStr := extractJSON(content)
+	if jsonStr == "" {
+		return content
+	}
+
+	var resp TaskListResponse
+	if err := json.Unmarshal([]byte(jsonStr), &resp); err != nil {
+		return content
+	}
+
+	if resp.Type == "" || resp.Message == "" {
+		return content
+	}
+
+	return resp.Message
+}
+
 // extractJSON extracts JSON object from a string (handles markdown code blocks)
 func extractJSON(s string) string {
 	s = strings.TrimSpace(s)

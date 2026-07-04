@@ -91,7 +91,7 @@ func convertSessionHistory(history []chat.MessageDTO) []groq.ChatMessage {
 	for i, msg := range history {
 		messages[i] = groq.ChatMessage{
 			Role:    msg.Role,
-			Content: msg.Content,
+			Content: chatSvc.ExtractHistoryText(msg.Content),
 		}
 	}
 	return messages
