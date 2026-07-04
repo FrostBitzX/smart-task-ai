@@ -26,6 +26,7 @@ type CreateProjectResponse struct {
 type ProjectResponse struct {
 	ID        string          `json:"id"`
 	Name      string          `json:"name"`
+	Role      string          `json:"role"`
 	Config    json.RawMessage `json:"config"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
@@ -57,7 +58,6 @@ type DeleteProjectResponse struct {
 type AddMemberRequest struct {
 	ProjectID string `json:"-"`
 	Email     string `json:"email" validate:"required,email"`
-	Role      string `json:"role" validate:"omitempty,oneof=owner member"`
 }
 
 type AddMemberResponse struct {
@@ -77,8 +77,8 @@ type RemoveMemberResponse struct {
 }
 
 type ProjectMemberResponse struct {
-	AccountID string `json:"account_id"`
-	Role      string `json:"role"`
+	AccountID string    `json:"account_id"`
+	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

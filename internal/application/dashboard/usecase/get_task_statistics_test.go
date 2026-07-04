@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	projectEntity "github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks"
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/tasks/service"
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
@@ -31,12 +32,15 @@ func TestGetTaskStatisticsUseCase_Execute(t *testing.T) {
 
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
 	mockProjectRepo := mocks.NewMockProjectRepository(ctrl)
-	taskService := service.NewTaskService(mockRepo, mockProjectRepo)
+	mockMemberRepo := mocks.NewMockProjectMemberRepository(ctrl)
+	taskService := service.NewTaskService(mockRepo, mockProjectRepo, mockMemberRepo)
 	logger := &mockLogger{}
 	uc := NewGetTaskStatisticsUseCase(taskService, logger)
 	ctx := context.Background()
 	nodeIDStr := "550e8400-e29b-41d4-a716-446655440000"
 	nodeID := uuid.MustParse(nodeIDStr)
+	projectID1 := uuid.New()
+	projectID2 := uuid.New()
 
 	tests := []struct {
 		name          string
@@ -51,18 +55,35 @@ func TestGetTaskStatisticsUseCase_Execute(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:      "success - returns statistics with all statuses",
+			name:      "success - returns statistics with all statuses from multiple projects",
 			nodeIDStr: nodeIDStr,
 			setupMock: func() {
-				statusCounts := []tasks.StatusCount{
-					{Status: "todo", Count: 5},
-					{Status: "in_progress", Count: 3},
-					{Status: "in_review", Count: 2},
-					{Status: "done", Count: 10},
-				}
+				// Mock ListProjectByAccountID
+				mockProjectRepo.EXPECT().
+					ListProjectByAccountID(ctx, nodeID, uuid.Nil, 1000, 0).
+					Return([]*projectEntity.Project{
+						{ID: projectID1, NodeID: nodeID},
+						{ID: projectID2, NodeID: nodeID},
+					}, 2, nil).
+					Times(1)
+
+				// Mock CountTasksByStatusAndProject for project 1
 				mockRepo.EXPECT().
-					CountTasksByStatus(ctx, nodeID).
-					Return(statusCounts, nil).
+					CountTasksByStatusAndProject(ctx, projectID1).
+					Return([]tasks.StatusCount{
+						{Status: "todo", Count: 3},
+						{Status: "in_progress", Count: 2},
+					}, nil).
+					Times(1)
+
+				// Mock CountTasksByStatusAndProject for project 2
+				mockRepo.EXPECT().
+					CountTasksByStatusAndProject(ctx, projectID2).
+					Return([]tasks.StatusCount{
+						{Status: "todo", Count: 2},
+						{Status: "in_review", Count: 2},
+						{Status: "done", Count: 10},
+					}, nil).
 					Times(1)
 			},
 			expectedStats: &struct {
@@ -72,19 +93,19 @@ func TestGetTaskStatisticsUseCase_Execute(t *testing.T) {
 				Done       int64
 			}{
 				Todo:       5,
-				InProgress: 3,
+				InProgress: 2,
 				InReview:   2,
 				Done:       10,
 			},
 			expectedError: "",
 		},
 		{
-			name:      "success - returns zero statistics when no tasks",
+			name:      "success - returns zero statistics when no projects",
 			nodeIDStr: nodeIDStr,
 			setupMock: func() {
-				mockRepo.EXPECT().
-					CountTasksByStatus(ctx, nodeID).
-					Return([]tasks.StatusCount{}, nil).
+				mockProjectRepo.EXPECT().
+					ListProjectByAccountID(ctx, nodeID, uuid.Nil, 1000, 0).
+					Return([]*projectEntity.Project{}, 0, nil).
 					Times(1)
 			},
 			expectedStats: &struct {
@@ -113,13 +134,13 @@ func TestGetTaskStatisticsUseCase_Execute(t *testing.T) {
 			name:      "error - repository fails",
 			nodeIDStr: nodeIDStr,
 			setupMock: func() {
-				mockRepo.EXPECT().
-					CountTasksByStatus(ctx, nodeID).
-					Return(nil, apperror.NewInternalServerError("database error", "DB_ERROR", errors.New("connection failed"))).
+				mockProjectRepo.EXPECT().
+					ListProjectByAccountID(ctx, nodeID, uuid.Nil, 1000, 0).
+					Return(nil, 0, apperror.NewInternalServerError("database error", "DB_ERROR", errors.New("connection failed"))).
 					Times(1)
 			},
 			expectedStats: nil,
-			expectedError: "failed to get task statistics",
+			expectedError: "failed to list user projects",
 		},
 	}
 

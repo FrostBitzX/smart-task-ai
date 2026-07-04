@@ -17,14 +17,16 @@ import (
 )
 
 type ProjectService struct {
-	repo     projects.ProjectRepository
-	taskRepo tasks.TaskRepository
+	repo       projects.ProjectRepository
+	taskRepo   tasks.TaskRepository
+	memberRepo projects.ProjectMemberRepository
 }
 
-func NewProjectService(repo projects.ProjectRepository, taskRepo tasks.TaskRepository) *ProjectService {
+func NewProjectService(repo projects.ProjectRepository, taskRepo tasks.TaskRepository, memberRepo projects.ProjectMemberRepository) *ProjectService {
 	return &ProjectService{
-		repo:     repo,
-		taskRepo: taskRepo,
+		repo:       repo,
+		taskRepo:   taskRepo,
+		memberRepo: memberRepo,
 	}
 }
 
@@ -49,24 +51,38 @@ func (s *ProjectService) CreateProject(ctx context.Context, req *project.CreateP
 	proj := &entity.Project{
 		ID:        uuid.New(),
 		NodeID:    nodeUUID,
-		AccountID: accountID,
-		Role:      "owner",
+		OwnerID:   accountID,
 		Name:      req.Name,
 		Config:    req.Config,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	// persist account to database
+	// persist project to database
 	err = s.repo.CreateProject(ctx, proj)
 	if err != nil {
 		return nil, apperror.NewInternalServerError("failed to create project", "CREATE_PROJECT_ERROR", err)
 	}
 
+	// Add owner to project_members table
+	ownerMember := &entity.ProjectMember{
+		ProjectID: proj.ID,
+		AccountID: accountID,
+		NodeID:    nodeUUID,
+		Role:      entity.RoleOwner,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	err = s.memberRepo.Create(ctx, ownerMember)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to add owner to project members", "ADD_OWNER_ERROR", err)
+	}
+
 	return proj, nil
 }
 
-func (s *ProjectService) GetProjectByID(ctx context.Context, projectID uuid.UUID, nodeID string) (*entity.Project, error) {
+func (s *ProjectService) GetProjectByID(ctx context.Context, projectID uuid.UUID, nodeID string, accountID uuid.UUID) (*entity.Project, error) {
 	// Parse nodeID
 	nodeUUID, err := uuid.Parse(nodeID)
 	if err != nil {
@@ -79,6 +95,15 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, projectID uuid.UUID
 			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
 		}
 		return nil, apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
+	}
+
+	// Check if user has access to this project
+	isMember, err := s.memberRepo.IsMember(ctx, projectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to check membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you don't have access to this project", "NO_ACCESS", nil)
 	}
 
 	return proj, nil
@@ -155,7 +180,7 @@ func (s *ProjectService) DeleteProject(ctx context.Context, projectID uuid.UUID,
 		return apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
 	}
 
-	if err := s.deleteProjectCheck(ctx, projectID, nodeUUID); err != nil {
+	if err := s.deleteProjectCheck(ctx, projectID); err != nil {
 		return err
 	}
 
@@ -167,8 +192,8 @@ func (s *ProjectService) DeleteProject(ctx context.Context, projectID uuid.UUID,
 	return nil
 }
 
-func (s *ProjectService) deleteProjectCheck(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) error {
-	count, err := s.taskRepo.CountTasksByProject(ctx, projectID, nodeID)
+func (s *ProjectService) deleteProjectCheck(ctx context.Context, projectID uuid.UUID) error {
+	count, err := s.taskRepo.CountTasksByProject(ctx, projectID)
 	if err != nil {
 		return apperror.NewInternalServerError("failed to check tasks in project", "CHECK_TASKS_ERROR", err)
 	}
@@ -205,17 +230,14 @@ func (s *ProjectService) AddMember(ctx context.Context, projectID uuid.UUID, acc
 		return nil, apperror.NewInternalServerError("failed to check member", "CHECK_MEMBER_ERROR", err)
 	}
 
-	// Validate role
-	if role != "owner" && role != "member" {
-		role = "member"
-	}
+	projectRole := entity.RoleMember
 
 	now := time.Now()
 	member := &entity.ProjectMember{
 		ProjectID: projectID,
 		AccountID: accountID,
 		NodeID:    nodeUUID,
-		Role:      role,
+		Role:      projectRole,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -245,7 +267,7 @@ func (s *ProjectService) RemoveMember(ctx context.Context, projectID uuid.UUID, 
 	}
 
 	// Prevent removing owner
-	if member.Role == "owner" {
+	if member.Role == entity.RoleOwner {
 		return apperror.NewBadRequestError("cannot remove project owner", "CANNOT_REMOVE_OWNER", nil)
 	}
 
@@ -257,7 +279,7 @@ func (s *ProjectService) RemoveMember(ctx context.Context, projectID uuid.UUID, 
 	return nil
 }
 
-func (s *ProjectService) ListProjectMembers(ctx context.Context, projectID uuid.UUID, nodeID string) ([]*entity.ProjectMember, error) {
+func (s *ProjectService) ListProjectMembers(ctx context.Context, projectID uuid.UUID, nodeID string, accountID uuid.UUID) ([]*entity.ProjectMember, error) {
 	// Parse nodeID
 	nodeUUID, err := uuid.Parse(nodeID)
 	if err != nil {
@@ -271,6 +293,15 @@ func (s *ProjectService) ListProjectMembers(ctx context.Context, projectID uuid.
 			return nil, apperror.NewNotFoundError("project not found", "PROJECT_NOT_FOUND", err)
 		}
 		return nil, apperror.NewInternalServerError("failed to get project", "GET_PROJECT_ERROR", err)
+	}
+
+	// Check if user has access to this project
+	isMember, err := s.memberRepo.IsMember(ctx, projectID, accountID)
+	if err != nil {
+		return nil, apperror.NewInternalServerError("failed to check membership", "CHECK_MEMBER_ERROR", err)
+	}
+	if !isMember {
+		return nil, apperror.NewForbiddenError("you don't have access to this project", "NO_ACCESS", nil)
 	}
 
 	members, err := s.repo.ListProjectMembers(ctx, projectID, nodeUUID)

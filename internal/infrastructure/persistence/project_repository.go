@@ -24,7 +24,7 @@ func (r *projectRepository) CreateProject(ctx context.Context, proj *entity.Proj
 func (r *projectRepository) GetProjectByID(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) (*entity.Project, error) {
 	var proj entity.Project
 	err := r.db.WithContext(ctx).
-		Where("id = ? AND node_id = ?", projectID, nodeID).
+		Where("id = ?", projectID).
 		First(&proj).Error
 	if err != nil {
 		return nil, err
@@ -36,17 +36,28 @@ func (r *projectRepository) ListProjectByAccountID(ctx context.Context, accountI
 	var projects []*entity.Project
 	var total int64
 
-	// Get total count with node_id filter
-	if err := r.db.WithContext(ctx).
+	baseQuery := r.db.WithContext(ctx).
 		Model(&entity.Project{}).
-		Where("account_id = ? AND node_id = ?", accountID, nodeID).
-		Count(&total).Error; err != nil {
+		Where("projects.owner_id = ? OR projects.id IN (?)",
+			accountID,
+			r.db.Table("project_members").
+				Select("project_id").
+				Where("account_id = ?", accountID),
+		)
+
+	// Get total count
+	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Get paginated results with node_id filter
+	// Get paginated results
 	err := r.db.WithContext(ctx).
-		Where("account_id = ? AND node_id = ?", accountID, nodeID).
+		Where("projects.owner_id = ? OR projects.id IN (?)",
+			accountID,
+			r.db.Table("project_members").
+				Select("project_id").
+				Where("account_id = ?", accountID),
+		).
 		Limit(limit).
 		Offset(offset).
 		Find(&projects).Error
@@ -76,7 +87,7 @@ func (r *projectRepository) AddMember(ctx context.Context, member *entity.Projec
 
 func (r *projectRepository) RemoveMember(ctx context.Context, projectID uuid.UUID, accountID uuid.UUID, nodeID uuid.UUID) error {
 	return r.db.WithContext(ctx).
-		Where("project_id = ? AND account_id = ? AND node_id = ? AND role != ?", projectID, accountID, nodeID, "owner").
+		Where("project_id = ? AND account_id = ? AND node_id = ? AND role != ?", projectID, accountID, nodeID, entity.RoleOwner).
 		Delete(&entity.ProjectMember{}).Error
 }
 
@@ -94,7 +105,7 @@ func (r *projectRepository) GetProjectMember(ctx context.Context, projectID uuid
 func (r *projectRepository) ListProjectMembers(ctx context.Context, projectID uuid.UUID, nodeID uuid.UUID) ([]*entity.ProjectMember, error) {
 	var members []*entity.ProjectMember
 	err := r.db.WithContext(ctx).
-		Where("project_id = ? AND node_id = ?", projectID, nodeID).
+		Where("project_id = ?", projectID).
 		Find(&members).Error
 	return members, err
 }

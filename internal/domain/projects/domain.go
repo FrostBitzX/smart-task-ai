@@ -7,18 +7,12 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/domain/projects/entity"
 )
 
-type Role struct {
-	Owner  string
-	Member string
-}
-
 // Project represents the project data exposed via the HTTP API.
 // It is mapped from the domain/entity Project model.
 type Project struct {
 	ID        string          `json:"id"`
 	NodeID    string          `json:"nodeId"`
-	AccountID string          `json:"accountId"`
-	Role      Role            `json:"role"`
+	OwnerID   string          `json:"ownerId"`
 	Name      string          `json:"name"`
 	Config    json.RawMessage `json:"config"`
 	CreatedAt time.Time       `json:"createdAt"`
@@ -35,8 +29,7 @@ func FromProjectModel(p *entity.Project) *Project {
 	proj := &Project{
 		ID:        p.ID.String(),
 		NodeID:    p.NodeID.String(),
-		AccountID: p.AccountID.String(),
-		Role:      Role{Owner: p.Role, Member: p.Role},
+		OwnerID:   p.OwnerID.String(),
 		Name:      p.Name,
 		Config:    p.Config,
 		CreatedAt: p.CreatedAt,

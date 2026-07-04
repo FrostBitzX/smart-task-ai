@@ -10,6 +10,7 @@ import (
 	chatUC "github.com/FrostBitzX/smart-task-ai/internal/application/chat/usecase"
 	dashboardUseCase "github.com/FrostBitzX/smart-task-ai/internal/application/dashboard/usecase"
 	"github.com/FrostBitzX/smart-task-ai/internal/application/file"
+	invitationUC "github.com/FrostBitzX/smart-task-ai/internal/application/invitation/usecase"
 	profileUC "github.com/FrostBitzX/smart-task-ai/internal/application/profile/usecase"
 	projectUC "github.com/FrostBitzX/smart-task-ai/internal/application/project/usecase"
 	taskUC "github.com/FrostBitzX/smart-task-ai/internal/application/task/usecase"
@@ -45,7 +46,8 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	// Project setup
 	projectRepository := repo.NewProjectRepository(db)
 	taskRepository := repo.NewTaskRepository(db)
-	projectService := projectDomain.NewProjectService(projectRepository, taskRepository)
+	memberRepository := repo.NewMemberRepository(db)
+	projectService := projectDomain.NewProjectService(projectRepository, taskRepository, memberRepository)
 	createProjectUC := projectUC.NewCreateProjectUseCase(projectService, log)
 	listProjectByAccountUC := projectUC.NewListProjectByAccountUseCase(projectService, log)
 	getProjectByIDUC := projectUC.NewGetProjectByIDUseCase(projectService, log)
@@ -76,8 +78,39 @@ func RegisterPrivateRoutes(app fiber.Router, db *gorm.DB, log logger.Logger) {
 	api.Delete("/projects/:projectId/members/:accountId", projectHandlerInstance.RemoveMember)
 	api.Get("/projects/:projectId/members", projectHandlerInstance.ListMembers)
 
+	// Invitation setup
+	invitationService := projectDomain.NewInvitationService(
+		repo.NewInvitationRepository(db),
+		accountRepository,
+		repo.NewMemberRepository(db),
+		projectRepository,
+	)
+	createInvitationUC := invitationUC.NewCreateInvitationUseCase(invitationService, log)
+	acceptInvitationUC := invitationUC.NewAcceptInvitationUseCase(invitationService, log)
+	rejectInvitationUC := invitationUC.NewRejectInvitationUseCase(invitationService, log)
+	cancelInvitationUC := invitationUC.NewCancelInvitationUseCase(invitationService, log)
+	listMyInvitationsUC := invitationUC.NewListMyInvitationsUseCase(invitationService, log)
+	listProjectInvitationsUC := invitationUC.NewListProjectInvitationsUseCase(invitationService, log)
+	invitationHandlerInstance := handler.NewInvitationHandler(
+		createInvitationUC,
+		acceptInvitationUC,
+		rejectInvitationUC,
+		cancelInvitationUC,
+		listMyInvitationsUC,
+		listProjectInvitationsUC,
+		log,
+	)
+
+	// Invitation routes
+	api.Post("/projects/:projectId/invite", invitationHandlerInstance.CreateInvitation)
+	api.Post("/projects/:projectId/invite/:inviteeAccountId/accept", invitationHandlerInstance.AcceptInvitation)
+	api.Post("/projects/:projectId/invite/:inviteeAccountId/reject", invitationHandlerInstance.RejectInvitation)
+	api.Delete("/projects/:projectId/invite/:inviteeAccountId", invitationHandlerInstance.CancelInvitation)
+	api.Get("/accounts/me/invite", invitationHandlerInstance.ListMyInvitations)
+	api.Get("/projects/:projectId/invite", invitationHandlerInstance.ListProjectInvitations)
+
 	// Task setup
-	taskService := taskDomain.NewTaskService(taskRepository, projectRepository)
+	taskService := taskDomain.NewTaskService(taskRepository, projectRepository, memberRepository)
 	createTaskUC := taskUC.NewCreateTaskUseCase(taskService, log)
 	getTaskByIDUC := taskUC.NewGetTaskByIDUseCase(taskService, log)
 	listTasksByProjectUC := taskUC.NewListTasksByProjectUseCase(taskService, log)

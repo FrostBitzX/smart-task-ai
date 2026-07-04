@@ -19,7 +19,9 @@ func TestProjectService_CreateProject(t *testing.T) {
 
 	mockRepo := mocks.NewMockProjectRepository(ctrl)
 	mockTaskRepo := mocks.NewMockTaskRepository(ctrl)
-	svc := NewProjectService(mockRepo, mockTaskRepo)
+	mockMemberRepo := mocks.NewMockProjectMemberRepository(ctrl)
+	svc := NewProjectService(mockRepo, mockTaskRepo, mockMemberRepo)
+
 	ctx := context.Background()
 
 	validAccountID := "550e8400-e29b-41d4-a716-446655440000"
@@ -44,9 +46,15 @@ func TestProjectService_CreateProject(t *testing.T) {
 					CreateProject(ctx, gomock.Any()).
 					DoAndReturn(func(_ context.Context, proj *entity.Project) error {
 						assert.Equal(t, "Test Project", proj.Name)
-						assert.Equal(t, "owner", proj.Role)
 						assert.NotEmpty(t, proj.ID)
-						assert.NotEmpty(t, proj.AccountID)
+						assert.NotEmpty(t, proj.OwnerID)
+						return nil
+					}).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					Create(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, member *entity.ProjectMember) error {
+						assert.Equal(t, entity.RoleOwner, member.Role)
 						return nil
 					}).
 					Times(1)
@@ -55,7 +63,6 @@ func TestProjectService_CreateProject(t *testing.T) {
 			expectNil:     false,
 			validate: func(t *testing.T, res *entity.Project) {
 				assert.Equal(t, "Test Project", res.Name)
-				assert.Equal(t, "owner", res.Role)
 				assert.JSONEq(t, `{"color": "blue", "theme": "dark"}`, string(res.Config))
 			},
 		},
@@ -68,6 +75,10 @@ func TestProjectService_CreateProject(t *testing.T) {
 			setupMock: func() {
 				mockRepo.EXPECT().
 					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					Create(ctx, gomock.Any()).
 					Return(nil).
 					Times(1)
 			},
@@ -135,6 +146,26 @@ func TestProjectService_CreateProject(t *testing.T) {
 			validate:      nil,
 		},
 		{
+			name: "error - add owner to members fails",
+			request: &project.CreateProjectRequest{
+				AccountID: validAccountID,
+				Name:      "Test Project",
+			},
+			setupMock: func() {
+				mockRepo.EXPECT().
+					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					Create(ctx, gomock.Any()).
+					Return(errors.New("member creation error")).
+					Times(1)
+			},
+			expectedError: "failed to add owner to project members",
+			expectNil:     true,
+			validate:      nil,
+		},
+		{
 			name: "success - creates project with empty name",
 			request: &project.CreateProjectRequest{
 				AccountID: validAccountID,
@@ -143,6 +174,10 @@ func TestProjectService_CreateProject(t *testing.T) {
 			setupMock: func() {
 				mockRepo.EXPECT().
 					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					Create(ctx, gomock.Any()).
 					Return(nil).
 					Times(1)
 			},
@@ -162,6 +197,10 @@ func TestProjectService_CreateProject(t *testing.T) {
 			setupMock: func() {
 				mockRepo.EXPECT().
 					CreateProject(ctx, gomock.Any()).
+					Return(nil).
+					Times(1)
+				mockMemberRepo.EXPECT().
+					Create(ctx, gomock.Any()).
 					Return(nil).
 					Times(1)
 			},

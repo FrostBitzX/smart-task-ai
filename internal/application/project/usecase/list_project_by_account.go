@@ -10,7 +10,6 @@ import (
 	"github.com/FrostBitzX/smart-task-ai/internal/infrastructure/logger"
 	"github.com/FrostBitzX/smart-task-ai/internal/utils"
 	"github.com/FrostBitzX/smart-task-ai/pkg/apperror"
-	"github.com/google/uuid"
 )
 
 type ListProjectByAccountUseCase struct {
@@ -30,7 +29,7 @@ func (uc *ListProjectByAccountUseCase) Execute(ctx context.Context, req *project
 		return nil, apperror.NewBadRequestError("invalid request body", "INVALID_REQUEST", nil)
 	}
 
-	accountID, err := uuid.Parse(req.AccountID)
+	accountID, err := utils.ParseID(req.AccountID, "acc")
 	if err != nil {
 		return nil, apperror.NewBadRequestError("invalid account ID format", "INVALID_ACCOUNT_ID", err)
 	}
@@ -47,9 +46,15 @@ func (uc *ListProjectByAccountUseCase) Execute(ctx context.Context, req *project
 	// Convert entities to DTOs
 	items := make([]project.ProjectResponse, len(projs))
 	for i, p := range projs {
+		role := string(entity.RoleMember) // Member
+		if p.OwnerID == accountID {
+			role = string(entity.RoleOwner) // Owner
+		}
+
 		items[i] = project.ProjectResponse{
 			ID:        utils.ShortUUIDWithPrefix(p.ID, entity.ProjectIDPrefix),
 			Name:      p.Name,
+			Role:      role,
 			Config:    p.Config,
 			CreatedAt: p.CreatedAt,
 			UpdatedAt: p.UpdatedAt,
