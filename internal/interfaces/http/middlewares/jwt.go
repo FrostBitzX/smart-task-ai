@@ -2,9 +2,12 @@ package middlewares
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
@@ -32,7 +35,11 @@ func getJWKS() (map[string]interface{}, error) {
 	}
 	jwksCacheMu.RUnlock()
 
-	url := os.Getenv("SUPABASE_URL") + "/auth/v1/.well-known/jwks.json"
+	baseURL := os.Getenv("SUPABASE_URL")
+	if baseURL == "" {
+		baseURL = os.Getenv("SUPABASE_PUBLIC_URL")
+	}
+	url := baseURL + "/auth/v1/.well-known/jwks.json"
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -69,12 +76,43 @@ func getPublicKey(kid string) (*ecdsa.PublicKey, error) {
 		if !ok {
 			continue
 		}
-		if keyMap["kid"] == kid {
-			return jwt.ParseECPublicKeyFromPEM([]byte(fmt.Sprintf(
-				"-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----",
-				keyMap["x"],
-			)))
+		if keyMap["kid"] != kid {
+			continue
 		}
+
+		crv, _ := keyMap["crv"].(string)
+		xStr, _ := keyMap["x"].(string)
+		yStr, _ := keyMap["y"].(string)
+		if xStr == "" || yStr == "" {
+			return nil, fmt.Errorf("invalid EC key material for kid: %s", kid)
+		}
+
+		var curve elliptic.Curve
+		switch crv {
+		case "P-256":
+			curve = elliptic.P256()
+		case "P-384":
+			curve = elliptic.P384()
+		case "P-521":
+			curve = elliptic.P521()
+		default:
+			return nil, fmt.Errorf("unsupported EC curve: %s", crv)
+		}
+
+		xBytes, err := base64.RawURLEncoding.DecodeString(xStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode x coordinate: %w", err)
+		}
+		yBytes, err := base64.RawURLEncoding.DecodeString(yStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode y coordinate: %w", err)
+		}
+
+		return &ecdsa.PublicKey{
+			Curve: curve,
+			X:     new(big.Int).SetBytes(xBytes),
+			Y:     new(big.Int).SetBytes(yBytes),
+		}, nil
 	}
 	return nil, fmt.Errorf("key not found: %s", kid)
 }
